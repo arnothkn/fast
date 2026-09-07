@@ -15,14 +15,13 @@
 <style>
   :root{
     --bg:#FBF7F0; --card:#FFFFFF; --ink:#1D2320; --muted:#6E7671;
-    /* Orange is the working colour and green is now the reward: the arc, the
-       dots and the filled calendar days run orange while she is fasting, and
-       turn green at the moment she reaches the goal. --accent-dark is only
-       ever the lip under a button. --warn-soft moved yellower to keep the
-       confirm box from reading as just another orange panel. */
-    --accent:#DD5E0B; --accent-dark:#A8430A; --accent-soft:#FDEADB;
-    --done:#1E7A4F; --done-soft:#E3F0EC;
-    --track:#E8E1D6; --line:#DED6C9; --warn-soft:#FAF0D6;
+    /* Green is the working colour and amber marks the goal reached. --accent
+       is a truer, deeper green than the teal it started as: white on it reads
+       at 6.2:1 rather than 5.1:1, and the Start button was the one place where
+       that mattered. --accent-dark is only ever the lip under a button. */
+    --accent:#116E4E; --accent-dark:#0C5239; --accent-soft:#E4F0EA;
+    --done:#B8761B;
+    --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; height:100%; overscroll-behavior:none;}
@@ -69,14 +68,16 @@
      when she drags that way while aiming sideways at the photos. */
   body.landing{overflow:hidden;}
   .btn.big{padding:22px; font-size:22px;}
-  /* Over a photo the lip stays and a drop shadow is added under it, so the
-     buttons keep their edge against whatever is behind them. */
-  body.hasphoto .btn.primary{box-shadow:0 4px 0 var(--accent-dark), 0 10px 22px rgba(0,0,0,.34);}
-  body.hasphoto .btn.ghost{box-shadow:inset 0 0 0 2px var(--line), 0 4px 0 var(--line),
-                                      0 10px 22px rgba(0,0,0,.34);}
-  body.hasphoto .btn.primary:active{box-shadow:0 1px 0 var(--accent-dark), 0 6px 14px rgba(0,0,0,.3);}
-  body.hasphoto .btn.ghost:active{box-shadow:inset 0 0 0 2px var(--line), 0 1px 0 var(--line),
-                                             0 6px 14px rgba(0,0,0,.3);}
+  /* Only on the opening screen, and only when a photo is actually behind them:
+     the lip stays and a drop shadow is added under it. The white button takes a
+     much lighter one — at the same strength as the green it read as a slab
+     sitting on the photo rather than a card lying on it. */
+  body.landing.hasphoto .btn.primary{box-shadow:0 4px 0 var(--accent-dark), 0 8px 18px rgba(0,0,0,.3);}
+  body.landing.hasphoto .btn.ghost{box-shadow:inset 0 0 0 2px var(--line), 0 4px 0 var(--line),
+                                              0 3px 10px rgba(0,0,0,.14);}
+  body.landing.hasphoto .btn.primary:active{box-shadow:0 1px 0 var(--accent-dark), 0 5px 12px rgba(0,0,0,.26);}
+  body.landing.hasphoto .btn.ghost:active{box-shadow:inset 0 0 0 2px var(--line), 0 1px 0 var(--line),
+                                                     0 2px 7px rgba(0,0,0,.12);}
 
   /* One dot per photo, so it is plain there are more to swipe to. */
   .dots{display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin:0 0 2px;}
@@ -234,8 +235,8 @@
   /* The reward for seeing a fast through. Sparse on purpose — more to come. */
   .tick{display:flex; justify-content:center;}
   .tick svg{width:140px; height:140px;}
-  .tick-ring{fill:var(--done-soft); stroke:none;}
-  .tick-mark{fill:none; stroke:var(--done); stroke-width:11;
+  .tick-ring{fill:var(--accent-soft); stroke:none;}
+  .tick-mark{fill:none; stroke:var(--accent); stroke-width:11;
              stroke-linecap:round; stroke-linejoin:round;
              stroke-dasharray:70; stroke-dashoffset:70;
              animation:draw .45s .2s cubic-bezier(.65,0,.35,1) forwards;}
@@ -243,20 +244,21 @@
   .wd{margin:0; text-align:center; font-size:30px; font-weight:700; letter-spacing:-.02em;}
   .wdsub{margin:0; text-align:center; font-size:17px; line-height:1.4; color:var(--muted);}
 
-  /* ---- settings, reached by the cog on the opening screen ---- */
-  /* The cog belongs to the opening screen only. Everywhere else the app shows
-     one thing at a time, and a fast under way is not the moment for settings. */
-  .cog{position:fixed; z-index:2; top:calc(env(safe-area-inset-top) + 6px); right:10px;
+  /* ---- the small button in the top corner ---- */
+  /* Two buttons share the same corner, and each belongs to one screen: the cog
+     to the opening screen, the calendar to a fast that is set or under way.
+     Never both at once — the app shows one thing at a time. */
+  .topbtn{position:fixed; z-index:2; top:calc(env(safe-area-inset-top) + 6px); right:10px;
        width:44px; height:44px; padding:0; border:0; background:none; cursor:pointer;
        touch-action:manipulation; display:flex; align-items:center; justify-content:center;
        opacity:0; pointer-events:none; transition:opacity .28s ease;}
-  body.landing .cog{opacity:1; pointer-events:auto;}
-  body.landing .cog:active{opacity:.5;}
-  .cog svg{width:25px; height:25px; fill:none; stroke:var(--muted);
+  body.landing .cog, body.timer .calview{opacity:1; pointer-events:auto;}
+  body.landing .cog:active, body.timer .calview:active{opacity:.5;}
+  .topbtn svg{width:25px; height:25px; fill:none; stroke:var(--muted);
            stroke-width:2.2; stroke-linecap:round;}
   /* Over a photo it has no scrim behind it, so it goes white with a soft shadow
      — readable on a dark sky or a bright beach alike. */
-  body.hasphoto .cog svg{stroke:#fff; filter:drop-shadow(0 2px 7px rgba(0,0,0,.6));}
+  body.landing.hasphoto .cog svg{stroke:#fff; filter:drop-shadow(0 2px 7px rgba(0,0,0,.6));}
 
   .hint{margin:0; text-align:center; font-size:15px; line-height:1.45; color:var(--muted);}
   .setgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
@@ -317,7 +319,7 @@
 
   @media (prefers-reduced-motion: reduce){
     .page > *{transition-duration:.01ms; transform:none;}
-    .photos, .scrim, .cog, .viewer, .viewer img.snap, .btn{transition:none;}
+    .photos, .scrim, .topbtn, .viewer, .viewer img.snap, .btn{transition:none;}
     .tick-mark{animation:none; stroke-dashoffset:0;}
     .arc-fill{transition:none;}
   }
@@ -326,13 +328,19 @@
 <body>
 <div class="photos" id="photos" hidden></div>
 <div class="scrim" id="scrim" hidden></div>
-<button class="cog" id="btnCog" aria-label="Settings">
+<button class="topbtn cog" id="btnCog" aria-label="Settings">
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="7.4"/>
     <circle cx="12" cy="12" r="2.7"/>
     <path d="M19.4 12 L22.2 12 M17.23 6.77 L19.21 4.79 M12 4.6 L12 1.8
              M6.77 6.77 L4.79 4.79 M4.6 12 L1.8 12 M6.77 17.23 L4.79 19.21
              M12 19.4 L12 22.2 M17.23 17.23 L19.21 19.21"/>
+  </svg>
+</button>
+<button class="topbtn calview" id="btnCalTop" aria-label="View calendar">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="3.2" y="5" width="17.6" height="15.8" rx="2.6"/>
+    <path d="M3.2 9.9 H20.8 M8 2.9 V6.7 M16 2.9 V6.7"/>
   </svg>
 </button>
 <input type="file" id="pick" accept="image/*" multiple hidden>
@@ -939,7 +947,7 @@
     // Backing out of the pickers leaves her on the opening screen, so that
     // screen has to lead back to a fast she already has. Otherwise it would be
     // stranded there until she closed the app.
-    elStart.textContent = state.fast ? 'Your fast' : 'Start';
+    elStart.textContent = 'Start';
 
     // The one thing she actually wants to know while a fast is running.
     var running = p==='fasting';
@@ -1248,6 +1256,7 @@
     if(next===cur) return;
     var prev=cur; cur=next;
     document.body.classList.toggle('landing', id==='pgHome');
+    document.body.classList.toggle('timer', id==='pgTimer');
     function show(){
       next.hidden=false; onShow(next);
       requestAnimationFrame(function(){ next.classList.add('on'); });
@@ -1269,14 +1278,21 @@
   elStart.addEventListener('click', function(){
     go(state.fast ? openPage() : 'pgLength');
   });
-  document.getElementById('btnCal').addEventListener('click', function(){ go('pgCal'); });
-  document.getElementById('calBack').addEventListener('click', function(){ go('pgHome'); });
+  // The calendar is now reachable from two places, so Back has to return to
+  // whichever one she came from rather than always to the opening screen —
+  // which, mid-fast, is not a screen she should be able to land on at all.
+  var calFrom='pgHome';
+  document.getElementById('btnCal').addEventListener('click', function(){ calFrom='pgHome'; go('pgCal'); });
+  document.getElementById('btnCalTop').addEventListener('click', function(){ calFrom='pgTimer'; go('pgCal'); });
+  document.getElementById('calBack').addEventListener('click', function(){ go(calFrom); });
   document.getElementById('btnNext').addEventListener('click', function(){ go('pgTime'); });
   document.getElementById('btnBack').addEventListener('click', function(){ go('pgLength'); });
   document.getElementById('btnLenBack').addEventListener('click', function(){ go('pgLength'); });
   // Back always steps back along the flow — landing, length, start time — and
   // never sideways into whatever the app happens to be doing.
-  elCancel.addEventListener('click', function(){ go('pgHome'); });
+  // Backing out of Change means she has left the fast alone, so it returns her
+  // to it. The opening screen would have said Start over a fast still running.
+  elCancel.addEventListener('click', function(){ go(state.fast ? openPage() : 'pgHome'); });
   document.getElementById('btnDone').addEventListener('click', function(){
     state.fast=null; save(); render();   // the reward is spent; the day keeps its mark
     go('pgHome');
