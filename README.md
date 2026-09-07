@@ -46,7 +46,7 @@ run.
 **Bump `CACHE` in `sw.js` every time you change any file:**
 
 ```js
-var CACHE = 'fasting-v34';   // -> 'fasting-v35'
+var CACHE = 'fasting-v35';   // -> 'fasting-v36'
 ```
 
 The service worker serves the whole app out of a cache named after that string.

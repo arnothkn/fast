@@ -19,7 +19,7 @@
     --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; height:100%;}
+  html,body{margin:0; height:100%; overscroll-behavior:none;}
   body{
     background:var(--bg); color:var(--ink);
     font:400 17px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
@@ -34,19 +34,34 @@
   /* Opening screen. The photo fills the whole screen behind everything, with a
      scrim at the foot so the button stays readable over a light picture. The
      button sits low so it does not land on her face. */
-  .photos{position:fixed; inset:0; z-index:0; pointer-events:none;
+  /* One pane per photo on a single sideways track. The photo follows her
+     finger and iOS supplies the momentum, the rubber-band at the two ends and
+     the axis lock. What was here before was a crossfade: it began after the
+     swipe had already finished, which is not the same thing as swiping. */
+  .photos{position:fixed; inset:0; z-index:0; display:flex;
+          overflow-x:auto; overflow-y:hidden; overscroll-behavior:contain;
+          scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+          scrollbar-width:none; pointer-events:none;
           opacity:0; transition:opacity .28s ease;}
-  body.landing .photos{opacity:1;}
-  .photo{position:absolute; inset:0; opacity:0; transition:opacity .32s ease;
-         background-size:cover; background-position:center; background-repeat:no-repeat;}
-  .photo.on{opacity:1;}
-  .photos::after{content:''; position:absolute; inset:0;
-                 background:linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,.5) 100%);}
+  .photos::-webkit-scrollbar{display:none;}
+  body.landing .photos{opacity:1; pointer-events:auto;}
+  /* min-width:0 for the same reason as the strip: without it a flex item will
+     not go below a photo's own proportions, so one landscape shot would make
+     its pane wider than the screen and put every pane after it off-centre. */
+  .pane{flex:0 0 100%; width:100%; min-width:0; height:100%;
+        object-fit:cover; display:block; cursor:pointer;
+        scroll-snap-align:center; scroll-snap-stop:always;}
+  /* The scrim is its own fixed layer rather than part of the track, or it
+     would slide away with the photo it is there to darken. */
+  .scrim{position:fixed; inset:0; z-index:0; pointer-events:none;
+         opacity:0; transition:opacity .28s ease;
+         background:linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,.5) 100%);}
+  body.landing .scrim{opacity:1;}
   body.landing .wrap{margin:auto 0 0;}
   body.landing.nophotos .wrap{margin:auto;}
-  /* Claim sideways drags for the photos, leaving vertical panning and
-     pinch-zoom to the browser. */
-  body.landing{touch-action:pan-y pinch-zoom;}
+  /* Nothing on the opening screen scrolls up and down, so nothing should move
+     when she drags that way while aiming sideways at the photos. */
+  body.landing{overflow:hidden;}
   .btn.big{padding:22px; font-size:22px;}
   body.hasphoto .btn.big{box-shadow:0 6px 24px rgba(0,0,0,.28);}
   body.hasphoto .btn.ghost{box-shadow:inset 0 0 0 2px var(--line), 0 6px 24px rgba(0,0,0,.28);}
@@ -252,9 +267,15 @@
   .viewer{position:fixed; inset:0; z-index:10; background:#000;
           display:flex; align-items:center; justify-content:center;
           padding:calc(env(safe-area-inset-top) + 56px) 0 calc(env(safe-area-inset-bottom) + 34px);
-          opacity:0; transition:opacity .22s ease; touch-action:pan-y pinch-zoom;}
+          opacity:0; transition:opacity .22s ease; touch-action:none;}
   .viewer.on{opacity:1;}
-  .viewer img{max-width:100%; max-height:100%; object-fit:contain; display:block;}
+  /* touch-action:none above hands every finger to us, because the pinch, the
+     drag and the swipe between photos all have to be told apart in one place.
+     .snap is only on for the eased return to fit — never during a gesture,
+     where the photo must track the fingers exactly. */
+  .viewer img{max-width:100%; max-height:100%; object-fit:contain; display:block;
+              transform-origin:center center;}
+  .viewer img.snap{transition:transform .22s ease;}
   .vclose{position:absolute; top:calc(env(safe-area-inset-top) + 6px); right:12px;
           width:44px; height:44px; padding:0; border:0; border-radius:50%;
           background:rgba(255,255,255,.16); color:#fff;
@@ -271,17 +292,15 @@
 
   @media (prefers-reduced-motion: reduce){
     .page > *{transition-duration:.01ms; transform:none;}
-    .photos, .photo, .cog, .viewer{transition:none;}
+    .photos, .scrim, .cog, .viewer, .viewer img.snap{transition:none;}
     .tick-mark{animation:none; stroke-dashoffset:0;}
     .arc-fill{transition:none;}
   }
 </style>
 </head>
 <body>
-<div class="photos" id="photos" hidden>
-  <div class="photo" id="photoA"></div>
-  <div class="photo" id="photoB"></div>
-</div>
+<div class="photos" id="photos" hidden></div>
+<div class="scrim" id="scrim" hidden></div>
 <button class="cog" id="btnCog" aria-label="Settings">
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="7.4"/>
@@ -500,10 +519,10 @@
     if(n>1){ do{ j=Math.floor(Math.random()*n); }while(j===i); }
     state.quoteIdx=j; save();
   }
-  // Her own photos, named in photos.js. Two stacked layers so one fades into
-  // the next, and she swipes sideways across the opening screen to move
-  // between them. Each is loaded before it is shown, so a missing or misspelt
-  // file is quietly dropped from the run rather than leaving a dark screen.
+  // Her own photos. They sit side by side on one sideways track across the
+  // opening screen, so a swipe drags the next one in under her finger. A
+  // missing or misspelt file is quietly dropped from the run rather than
+  // leaving a dark gap she can swipe into.
   //
   // Two sources, one run. The ones named in photos.js ship with the app; the
   // ones she adds herself live on the phone in IndexedDB, because there is no
@@ -512,9 +531,7 @@
   var bundled  = (window.PHOTOS || []).slice(),
       mine     = [],     // [{id, url}] — hers, as object URLs onto the stored files
       photos   = bundled.slice(),
-      photoTop = 0,      // which layer is on top, 0 = A
-      photoAt  = -1,     // index currently on screen, -1 = none painted yet
-      photoWant= -1,     // index most recently asked for, so a slow load loses
+      photoAt  = -1,     // index the track has settled on, -1 = none yet
       photosReady = false;
 
   function rebuildPhotos(){
@@ -524,6 +541,7 @@
     // screen waiting for a photo that is not there.
     document.body.classList.toggle('nophotos', !photos.length);
     stripDirty = true;
+    panesDirty = true;
   }
   rebuildPhotos();
 
@@ -640,8 +658,20 @@
     do{ j=Math.floor(Math.random()*n); }while(j===i);
     state.photoIdx=j; save();
   }
+  var panesDirty=true;
+  function buildPanes(){
+    var out='';
+    for(var i=0;i<photos.length;i++) out+='<img class="pane" src="'+photos[i]+'" alt="">';
+    elPhotoWrap.innerHTML=out;
+    panesDirty=false;
+  }
+  function paneW(){ return elPhotoWrap.clientWidth || window.innerWidth || 1; }
+
   function clearPhoto(){
-    elPhotoWrap.hidden=true; elDots.hidden=true;
+    elPhotoWrap.hidden=true; elScrim.hidden=true; elDots.hidden=true;
+    // Empty the track too, or it keeps a run of dead panes pointing at photos
+    // she has just removed.
+    elPhotoWrap.innerHTML=''; panesDirty=true;
     document.body.classList.remove('hasphoto');
     photoAt=-1;
   }
@@ -651,42 +681,73 @@
     for(var i=0;i<photos.length;i++) out+='<i'+(i===photoAt?' class="on"':'')+'></i>';
     elDots.innerHTML=out; elDots.hidden=false;
   }
+  // Puts a photo on screen outright. This is for arriving at the opening
+  // screen, not for swiping — while she swipes, the track is in charge and
+  // the scroll listener in wirePhotoTrack() reads back where it stopped.
   function showPhoto(i){
     var n=photos.length;
     if(!n){ clearPhoto(); return; }
+    elPhotoWrap.hidden=false; elScrim.hidden=false;
+    document.body.classList.add('hasphoto');
+    if(panesDirty) buildPanes();
     i=((i%n)+n)%n;
-    if(i===photoAt && i===photoWant) return;
-    photoWant=i;
-    var src=photos[i], img=new Image();
-    img.onload=function(){
-      if(photoWant!==i) return;               // she swiped past it while it loaded
-      var top = photoTop ? elPhotoB : elPhotoA,
-          nxt = photoTop ? elPhotoA : elPhotoB;
-      nxt.style.backgroundImage='url("'+src+'")';
-      top.classList.remove('on'); nxt.classList.add('on');
-      photoTop ^= 1; photoAt = i;
-      state.photoIdx = i; save();
-      elPhotoWrap.hidden=false;
-      document.body.classList.add('hasphoto');
+    elPhotoWrap.scrollLeft = i*paneW();
+    photoAt=i; state.photoIdx=i; save();
+    paintDots();
+  }
+  // Nudge the track a whole pane along, for a swipe that began somewhere the
+  // track could not feel it.
+  function scrollPane(i){
+    var n=photos.length; if(n<2) return;
+    i=Math.max(0, Math.min(n-1, i));
+    var x=i*paneW();
+    try{ elPhotoWrap.scrollTo({left:x, behavior:'smooth'}); }
+    catch(err){ elPhotoWrap.scrollLeft=x; }
+  }
+  // Wired further down, once the elements it needs have been looked up.
+  var settleT=0;
+  function wirePhotoTrack(){
+    // One that will not load leaves the run and takes its pane with it, so she
+    // never swipes into a black rectangle. One fewer each time, so this ends.
+    elPhotoWrap.addEventListener('error', function(e){
+      var img=e.target;
+      if(!img || img.tagName!=='IMG') return;
+      var bad=photos.indexOf(img.getAttribute('src'));
+      if(bad>-1) photos.splice(bad,1);
+      img.remove();
+      if(!photos.length){ clearPhoto(); return; }
+      if(photoAt>=photos.length) photoAt=photos.length-1;
       paintDots();
-    };
-    img.onerror=function(){
-      var bad=photos.indexOf(src);
-      if(bad>-1) photos.splice(bad,1);        // one fewer each time, so this ends
-      photoWant=-1;
-      if(photos.length) showPhoto(bad); else clearPhoto();
-    };
-    img.src=src;
+    }, true);
+    // Which one she has landed on. The dots follow the finger; the write to
+    // storage waits until she stops, so a fast flick through eight photos is
+    // one save and not eight.
+    elPhotoWrap.addEventListener('scroll', function(){
+      var i=Math.round(elPhotoWrap.scrollLeft/paneW());
+      if(i<0 || i>=photos.length || i===photoAt) return;
+      photoAt=i; paintDots();
+      clearTimeout(settleT);
+      settleT=setTimeout(function(){ state.photoIdx=photoAt; save(); }, 400);
+    });
+    // Tapping the photo opens it up, the same as tapping one in the strip.
+    elPhotoWrap.addEventListener('click', function(){
+      if(Date.now()-swipedAt < 500) return;
+      if(photos.length) openViewer(photoAt<0 ? 0 : photoAt);
+    });
   }
 
-  // Swiping moves between her photos, both across the opening screen and inside
-  // an opened one. Only a clearly sideways drag counts, and the tap that would
-  // follow one is swallowed — so swiping over the buttons never starts a fast,
-  // and swiping in the viewer never closes it.
+  // A swipe that starts ON the photo is the track's own business and never
+  // reaches here. This is for one that starts on the buttons, which is most of
+  // the bottom of the screen and has nothing under the finger to scroll — she
+  // would otherwise get nothing at all. The tap that would follow is swallowed
+  // below, so swiping across Start never starts a fast.
   var swipeX=0, swipeY=0, swiping=false, swipedAt=0;
   document.addEventListener('pointerdown', function(e){
-    swiping = (viewerOpen() || document.body.classList.contains('landing'))
-              && photos.length>1;
+    var t=e.target;
+    swiping = !viewerOpen()                        // the viewer runs its own
+              && document.body.classList.contains('landing')
+              && photos.length>1
+              && !(t && t.closest && t.closest('.photos'));
     swipeX=e.clientX; swipeY=e.clientY;
   });
   document.addEventListener('pointercancel', function(){ swiping=false; });
@@ -696,8 +757,7 @@
     var dx=e.clientX-swipeX, dy=e.clientY-swipeY;
     if(Math.abs(dx)<45 || Math.abs(dx)<Math.abs(dy)*1.5) return;
     swipedAt=Date.now();
-    var step = dx<0 ? 1 : -1;
-    if(viewerOpen()) showInViewer(viewAt+step); else showPhoto(photoAt+step);
+    scrollPane(photoAt + (dx<0 ? 1 : -1));
   });
   document.addEventListener('click', function(e){
     if(Date.now()-swipedAt < 500){ e.preventDefault(); e.stopPropagation(); }
@@ -811,8 +871,8 @@
       elStart=document.getElementById('btnStart'),
       elCancel=document.getElementById('btnCancel'),
       elPhotoWrap=document.getElementById('photos'),
-      elPhotoA=document.getElementById('photoA'),
-      elPhotoB=document.getElementById('photoB'),
+      elScrim=document.getElementById('scrim'),
+      elViewClose=document.getElementById('viewerClose'),
       elDots=document.getElementById('dots'),
       elStrip=document.getElementById('strip'),
       elViewer=document.getElementById('viewer'),
@@ -875,6 +935,8 @@
     elFill.style.strokeDashoffset = ARC*(1-progress);
   }
 
+  wirePhotoTrack();
+
   // ---------- the strip under the timer ----------
   // Rebuilt only when the set of photos actually changes. The timer repaints
   // every second, and rebuilding here would throw away her place in the strip
@@ -907,8 +969,46 @@
   });
 
   // ---------- one photo, opened up ----------
-  var viewAt=-1;
+  // Three gestures share this screen and have to be told apart: two fingers
+  // pinch it larger, one finger drags it about once it is larger than the
+  // screen, and one finger sideways moves to the next photo while it is not.
+  // None of it is left to Safari, whose own pinch would zoom the black and the
+  // cross along with the photo and would not hand it back when she let go.
+  var viewAt=-1, vs=1, vtx=0, vty=0, vBase=null,
+      vpts={}, vpinch=null, vpan=null;
   function viewerOpen(){ return !elViewer.hidden; }
+
+  function applyView(snap){
+    if(snap) elViewImg.classList.add('snap'); else elViewImg.classList.remove('snap');
+    elViewImg.style.transform='translate('+vtx+'px,'+vty+'px) scale('+vs+')';
+  }
+  function resetView(snap){ vs=1; vtx=0; vty=0; applyView(snap); }
+  // Where the photo lies when it is untouched — measured, not assumed. It is
+  // letterboxed inside the padding, so its middle is not the middle of the
+  // screen, and every limit below depends on where it actually is.
+  function measureView(){
+    var keep=elViewImg.style.transform;
+    elViewImg.style.transform='none';
+    var r=elViewImg.getBoundingClientRect();
+    elViewImg.style.transform=keep;
+    vBase = r.width ? {w:r.width, h:r.height,
+                       cx:r.left+r.width/2, cy:r.top+r.height/2} : null;
+  }
+  // She must not be able to push the photo off the edge and lose it.
+  function clampView(){
+    if(!vBase) return;
+    var vw=window.innerWidth, vh=window.innerHeight,
+        w=vBase.w*vs, h=vBase.h*vs;
+    if(w<=vw) vtx=0;
+    else vtx=Math.max(vw-vBase.cx-w/2, Math.min(w/2-vBase.cx, vtx));
+    if(h<=vh) vty=0;
+    else vty=Math.max(vh-vBase.cy-h/2, Math.min(h/2-vBase.cy, vty));
+  }
+  function vmid(ids){
+    var a=vpts[ids[0]], b=vpts[ids[1]];
+    return {x:(a.x+b.x)/2, y:(a.y+b.y)/2,
+            d:Math.max(1, Math.sqrt((b.x-a.x)*(b.x-a.x)+(b.y-a.y)*(b.y-a.y)))};
+  }
   function paintViewDots(){
     if(photos.length<2){ elViewDots.hidden=true; return; }
     var out='';
@@ -918,9 +1018,15 @@
   function showInViewer(i){
     var n=photos.length; if(!n) return;
     viewAt=((i%n)+n)%n;
+    vBase=null; resetView(false);      // a new photo always arrives whole
     elViewImg.src=photos[viewAt];
     paintViewDots();
   }
+  elViewImg.addEventListener('load', measureView);
+  window.addEventListener('resize', function(){
+    if(!viewerOpen()) return;
+    measureView(); clampView(); applyView(false);
+  });
   function openViewer(i){
     if(!photos.length) return;
     showInViewer(i);
@@ -934,12 +1040,75 @@
       if(elViewer.classList.contains('on')) return;   // she opened it again in the meantime
       elViewer.hidden=true;
       elViewImg.removeAttribute('src');               // let go of the full-size image
-      viewAt=-1;
+      viewAt=-1; vBase=null; resetView(false);
     }, 240);
   }
-  // Every way out is a tap: the cross, or anywhere on the photo. A swipe is not
-  // a tap, and the swallower above keeps the tail of one from closing it.
-  elViewer.addEventListener('click', function(){ closeViewer(); });
+
+  elViewer.addEventListener('pointerdown', function(e){
+    if(elViewClose.contains(e.target)) return;        // the cross is a button
+    vpts[e.pointerId]={x:e.clientX, y:e.clientY};
+    try{ elViewer.setPointerCapture(e.pointerId); }catch(err){}
+    var ids=Object.keys(vpts);
+    if(ids.length===2){
+      if(!vBase) measureView();
+      if(!vBase) return;
+      var m=vmid(ids);
+      // Remember where the middle of her two fingers falls ON THE PHOTO, so
+      // that spot stays under them however far apart she draws them.
+      vpinch={d:m.d, s:vs, px:(m.x-vBase.cx-vtx)/vs, py:(m.y-vBase.cy-vty)/vs};
+      vpan=null;
+    } else if(ids.length===1){
+      vpan={x:e.clientX, y:e.clientY, tx:vtx, ty:vty, moved:false};
+    }
+  });
+  elViewer.addEventListener('pointermove', function(e){
+    if(!vpts[e.pointerId]) return;
+    vpts[e.pointerId]={x:e.clientX, y:e.clientY};
+    var ids=Object.keys(vpts);
+    if(vpinch && ids.length>=2 && vBase){
+      var m=vmid(ids);
+      vs=Math.max(1, Math.min(4, vpinch.s*(m.d/vpinch.d)));
+      vtx=m.x-vBase.cx-vpinch.px*vs;
+      vty=m.y-vBase.cy-vpinch.py*vs;
+      clampView(); applyView(false);
+    } else if(vpan && vs>1 && ids.length===1){
+      vtx=vpan.tx+(e.clientX-vpan.x);
+      vty=vpan.ty+(e.clientY-vpan.y);
+      if(Math.abs(e.clientX-vpan.x)>4 || Math.abs(e.clientY-vpan.y)>4) vpan.moved=true;
+      clampView(); applyView(false);
+    }
+  });
+  function viewUp(e){
+    if(!vpts[e.pointerId]) return;
+    delete vpts[e.pointerId];
+    var left=Object.keys(vpts).length;
+    if(left<2) vpinch=null;
+    if(left) return;
+    var was=vpan; vpan=null;
+    if(vs>1.02){
+      if(was && was.moved) swipedAt=Date.now();   // a drag is not a tap
+      return;
+    }
+    if(vs!==1){ resetView(true); return; }        // barely pinched, settle back
+    if(!was) return;                              // the tail of a pinch
+    var dx=e.clientX-was.x, dy=e.clientY-was.y;
+    if(Math.abs(dx)<45 || Math.abs(dx)<Math.abs(dy)*1.5) return;
+    swipedAt=Date.now();
+    showInViewer(viewAt + (dx<0 ? 1 : -1));
+  }
+  elViewer.addEventListener('pointerup', viewUp);
+  elViewer.addEventListener('pointercancel', viewUp);
+
+  // Every way out is a tap: the cross, or anywhere on the photo. While it is
+  // zoomed in, that first tap gives her the whole photo back rather than
+  // closing it, so she cannot get stranded in a corner of one.
+  elViewer.addEventListener('click', function(){
+    if(vs>1.02){ resetView(true); return; }
+    closeViewer();
+  });
+  elViewClose.addEventListener('click', function(e){
+    e.stopPropagation(); closeViewer();            // the cross always means out
+  });
 
   // ---------- settings ----------
   function renderMine(){
@@ -965,7 +1134,7 @@
         mine.splice(i,1); break;
       }
       rebuildPhotos();
-      photoAt=-1; photoWant=-1;        // whatever was on screen may have been it
+      photoAt=-1;                      // whatever was on screen may have been it
       renderMine(); setHint(); paintDots(); render();
     });
   });
