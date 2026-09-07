@@ -36,15 +36,15 @@ repo on purpose.
 
 ## The font
 
-Thai is set in **Mitr**, served from this repo rather than from Google, so the
+Thai is set in **Kanit**, served from this repo rather than from Google, so the
 app still works with no signal and her phone never announces itself to a third
 party on every launch. Only the Thai block of the font is loaded — three weights,
-23KB all together — so digits and any Latin still come from the phone's own
+21KB all together — so digits and any Latin still come from the phone's own
 font, which is what keeps the timer's figures a fixed width as it counts.
 
 The three `.woff2` files are listed in `SHELL` in `sw.js`. **Anything the app
 loads has to be in that list**, or it will be missing when she is offline.
-`OFL-Mitr.txt` is the font's licence and has to stay with it.
+`OFL-Kanit.txt` is the font's licence and has to stay with it.
 
 ## Changing the quotes
 
@@ -58,7 +58,7 @@ run.
 **Bump `CACHE` in `sw.js` every time you change any file:**
 
 ```js
-var CACHE = 'fasting-v41';   // -> 'fasting-v42'
+var CACHE = 'fasting-v42';   // -> 'fasting-v43'
 ```
 
 The service worker serves the whole app out of a cache named after that string.

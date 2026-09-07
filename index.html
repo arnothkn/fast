@@ -25,25 +25,26 @@
        the colour every small label uses. Darkened rather than enlarged. */
     --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC;
   }
-  /* Mitr, Arno's choice. Only the Thai block is loaded — 23KB for three weights
-     — so digits and Latin still come from the phone's own font and the timer
-     keeps its fixed-width figures. Served from here rather than from Google, so
-     it works with no signal and costs her no privacy. */
-  @font-face{font-family:'Mitr'; font-style:normal; font-weight:400;
-             font-display:swap; src:url(mitr-thai-400.woff2) format('woff2');
+  /* Kanit, Arno's choice — lighter on the page than Mitr was. Only the Thai
+     block is loaded, 21KB for three weights, so digits and Latin still come
+     from the phone's own font and the timer keeps its fixed-width figures.
+     Served from here rather than from Google, so it works with no signal and
+     costs her no privacy. */
+  @font-face{font-family:'Kanit'; font-style:normal; font-weight:400;
+             font-display:swap; src:url(kanit-thai-400.woff2) format('woff2');
              unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
-  @font-face{font-family:'Mitr'; font-style:normal; font-weight:600;
-             font-display:swap; src:url(mitr-thai-600.woff2) format('woff2');
+  @font-face{font-family:'Kanit'; font-style:normal; font-weight:600;
+             font-display:swap; src:url(kanit-thai-600.woff2) format('woff2');
              unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
-  @font-face{font-family:'Mitr'; font-style:normal; font-weight:700;
-             font-display:swap; src:url(mitr-thai-700.woff2) format('woff2');
+  @font-face{font-family:'Kanit'; font-style:normal; font-weight:700;
+             font-display:swap; src:url(kanit-thai-700.woff2) format('woff2');
              unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; height:100%; overscroll-behavior:none;}
   body{
     background:var(--bg); color:var(--ink);
-    font:400 17px/1.4 'Mitr',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font:400 17px/1.4 'Kanit',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     display:flex; flex-direction:column; align-items:center;
     padding:calc(env(safe-area-inset-top) + 8px) 20px calc(env(safe-area-inset-bottom) + 16px);
     overscroll-behavior:none;
@@ -162,7 +163,7 @@
           -webkit-appearance:none; appearance:none;
           display:flex; flex-direction:column; align-items:center; justify-content:center;}
   .lenbox:active{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent);}
-  .lenbox .lab{font-size:15px; font-weight:600; line-height:1.5; color:var(--muted);}
+  .lenbox .lab{font-size:17px; font-weight:600; line-height:1.5; color:var(--muted);}
   .lenbox .v{margin-top:5px; font-size:23px; font-weight:700; line-height:1.25;
              color:var(--ink); font-variant-numeric:tabular-nums;}
   .band{position:absolute; left:8px; right:8px; top:44px; height:44px;
@@ -179,7 +180,7 @@
   /* the finish time is the thing she is really choosing, so it gets weight */
   .finish{background:var(--accent-soft); border-radius:16px; padding:13px 12px 15px;
           text-align:center;}
-  .finish .lab{display:block; font-size:16px; font-weight:600; line-height:1.5;
+  .finish .lab{display:block; font-size:18px; font-weight:600; line-height:1.5;
                color:var(--accent); opacity:.9;}
   .finish .t{display:block; margin-top:5px; font-size:32px; font-weight:700;
              letter-spacing:-.02em; line-height:1; color:var(--accent);
@@ -194,8 +195,8 @@
   body.done .arc-fill{stroke:var(--done);}
 
   .readout{position:absolute; left:8%; right:8%; bottom:8px; text-align:center;}
-  .cap{font-size:17px; font-weight:600; line-height:1.5;
-       color:var(--muted); min-height:26px;}
+  .cap{font-size:19px; font-weight:600; line-height:1.5;
+       color:var(--muted); min-height:29px;}
   .big{margin-top:6px; font-size:44px; font-weight:600; letter-spacing:-.02em;
        font-variant-numeric:tabular-nums; line-height:1;}
   .big.time{font-size:40px;}
