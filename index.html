@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fasting">
+<meta name="theme-color" content="#FBF7F0">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Fasting</title>
+<style>
+  :root{
+    --bg:#FBF7F0; --card:#FFFFFF; --ink:#1D2320; --muted:#6E7671;
+    --accent:#0E7C66; --accent-soft:#E3F0EC; --done:#B8761B;
+    --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:400 17px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:calc(env(safe-area-inset-top) + 8px) 20px calc(env(safe-area-inset-bottom) + 16px);
+    overscroll-behavior:none;
+  }
+  [hidden]{display:none !important;}
+  .wrap{position:relative; z-index:1; width:100%; max-width:420px; margin:auto;
+        display:flex; flex-direction:column; gap:20px;}
+
+  /* Opening screen. The photo fills the whole screen behind everything, with a
+     scrim at the foot so the button stays readable over a light picture. The
+     button sits low so it does not land on her face. */
+  .photos{position:fixed; inset:0; z-index:0; pointer-events:none;
+          opacity:0; transition:opacity .28s ease;}
+  body.landing .photos{opacity:1;}
+  .photo{position:absolute; inset:0; opacity:0; transition:opacity .32s ease;
+         background-size:cover; background-position:center; background-repeat:no-repeat;}
+  .photo.on{opacity:1;}
+  .photos::after{content:''; position:absolute; inset:0;
+                 background:linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,.5) 100%);}
+  body.landing .wrap{margin:auto 0 0;}
+  body.landing.nophotos .wrap{margin:auto;}
+  /* Claim sideways drags for the photos, leaving vertical panning and
+     pinch-zoom to the browser. */
+  body.landing{touch-action:pan-y pinch-zoom;}
+  .btn.big{padding:22px; font-size:22px;}
+  body.hasphoto .btn.big{box-shadow:0 6px 24px rgba(0,0,0,.28);}
+  body.hasphoto .btn.ghost{box-shadow:inset 0 0 0 2px var(--line), 0 6px 24px rgba(0,0,0,.28);}
+
+  /* One dot per photo, so it is plain there are more to swipe to. */
+  .dots{display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin:0 0 2px;}
+  .dots i{width:7px; height:7px; border-radius:50%; background:var(--track);
+          transition:background .2s ease;}
+  .dots i.on{background:var(--accent);}
+  body.hasphoto .dots i{background:rgba(255,255,255,.45);}
+  body.hasphoto .dots i.on{background:#fff;}
+
+  /* ---- calendar: one mark per day, nothing else ---- */
+  .calhead{display:flex; align-items:center; justify-content:space-between;}
+  .calhead .m{font-size:19px; font-weight:600;}
+  .navbtn{background:none; border:0; font-family:inherit; font-size:26px; line-height:1;
+          color:var(--muted); padding:6px 16px; touch-action:manipulation; cursor:pointer;}
+  .navbtn[disabled]{opacity:.22;}
+  .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .dow{text-align:center; font-size:11px; font-weight:600; letter-spacing:.06em;
+       text-transform:uppercase; color:var(--muted);}
+  .day{width:38px; height:38px; margin:0 auto; border-radius:50%;
+       display:flex; align-items:center; justify-content:center;
+       font-size:15px; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .day.blank{visibility:hidden;}
+  .day.done{background:var(--accent); color:#fff; font-weight:600;}
+  .day.miss{box-shadow:inset 0 0 0 2px var(--track); color:var(--muted);}
+  .day.today{box-shadow:inset 0 0 0 2px var(--done); font-weight:600;}
+  .legend{display:flex; gap:18px; justify-content:center; margin:0;
+          font-size:13px; color:var(--muted);}
+  .legend i{display:inline-block; width:12px; height:12px; border-radius:50%;
+            margin-right:6px; vertical-align:-1px;}
+  .legend .yes i{background:var(--accent);}
+  .legend .no i{box-shadow:inset 0 0 0 2px var(--track);}
+
+  /* ---- one page at a time, crossfading ---- */
+  .page{display:flex; flex-direction:column; gap:20px;}
+  .page > *{opacity:0; transform:translateY(8px);
+            transition:opacity .28s ease, transform .28s ease;}
+  .page.on > *{opacity:1; transform:none;}
+  .page.on > :nth-child(1){transition-delay:.02s;}
+  .page.on > :nth-child(2){transition-delay:.07s;}
+  .page.on > :nth-child(3){transition-delay:.12s;}
+  .page.on > :nth-child(4){transition-delay:.17s;}
+  .page.on > :nth-child(5){transition-delay:.22s;}
+  .page.on > :nth-child(6){transition-delay:.27s;}
+  .page.on > :nth-child(7){transition-delay:.32s;}
+
+  .q{margin:0; text-align:center; font-size:24px; font-weight:600; letter-spacing:-.01em;}
+
+  /* ---- wheel: 3 rows of 44px ---- */
+  .pickrow{display:flex; gap:10px; align-items:stretch;}
+  .wheelbox{position:relative; height:132px; background:var(--card);
+            border:1px solid var(--line); border-radius:18px; overflow:hidden;}
+  .pickrow .wheelbox{flex:1 1 0; min-width:0;}
+  /* A readout, not a control. Deliberately flat on the page colour with no fill
+     and no ring: every button here is either solid teal or white with a ring, so
+     this cannot be mistaken for one. Inert to touch as well as to the eye. */
+  /* Tapping this goes back to step 1, so it wears the same white-with-a-ring
+     as Back and Calendar — the shape she already knows means "you can press
+     this", and never the solid teal that means "this is the action". */
+  .lenbox{flex:0 0 33%; padding:0; font-family:inherit; color:inherit;
+          background:var(--card); border:0; box-shadow:inset 0 0 0 2px var(--line);
+          border-radius:18px; touch-action:manipulation; cursor:pointer;
+          -webkit-appearance:none; appearance:none;
+          display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .lenbox:active{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent);}
+  .lenbox .lab{font-size:10px; font-weight:600; letter-spacing:.12em;
+               text-transform:uppercase; color:var(--muted);}
+  .lenbox .v{margin-top:5px; font-size:30px; font-weight:700; letter-spacing:-.02em;
+             line-height:1; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .band{position:absolute; left:8px; right:8px; top:44px; height:44px;
+        background:var(--accent-soft); border-radius:12px; pointer-events:none;}
+  .scroller{position:relative; height:100%; overflow-y:scroll;
+            scroll-snap-type:y mandatory; -webkit-overflow-scrolling:touch;
+            padding:44px 0; scrollbar-width:none;}
+  .scroller::-webkit-scrollbar{display:none;}
+  .row{height:44px; display:flex; align-items:center; justify-content:center;
+       scroll-snap-align:center; font-size:19px; color:var(--muted);
+       font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .row.sel{color:var(--ink); font-weight:600; font-size:23px;}
+
+  /* the finish time is the thing she is really choosing, so it gets weight */
+  .finish{background:var(--accent-soft); border-radius:16px; padding:13px 12px 15px;
+          text-align:center;}
+  .finish .lab{display:block; font-size:11px; font-weight:600; letter-spacing:.12em;
+               text-transform:uppercase; color:var(--accent); opacity:.8;}
+  .finish .t{display:block; margin-top:5px; font-size:32px; font-weight:700;
+             letter-spacing:-.02em; line-height:1; color:var(--accent);
+             font-variant-numeric:tabular-nums;}
+
+  /* ---- arc + readout ---- */
+  .gauge{position:relative; width:100%;}
+  .arc{display:block; width:100%; height:auto;}
+  .arc path{fill:none; stroke-width:14; stroke-linecap:round;}
+  .arc-track{stroke:var(--track);}
+  .arc-fill{stroke:var(--accent); transition:stroke-dashoffset .4s ease, stroke .4s ease;}
+  body.done .arc-fill{stroke:var(--done);}
+
+  .readout{position:absolute; left:8%; right:8%; bottom:8px; text-align:center;}
+  .cap{font-size:13px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+       color:var(--muted); min-height:18px;}
+  .big{margin-top:6px; font-size:44px; font-weight:600; letter-spacing:-.02em;
+       font-variant-numeric:tabular-nums; line-height:1;}
+  .big.time{font-size:40px;}
+  .sub{margin-top:8px; font-size:16px; color:var(--muted);}
+  body.done .cap{color:var(--done);}
+  body.done .sub{color:var(--done); font-weight:600;}
+
+  /* ---- buttons ---- */
+  .btn{width:100%; padding:19px; border:0; border-radius:16px;
+       font-size:19px; font-weight:600; font-family:inherit;
+       touch-action:manipulation; cursor:pointer;}
+  .btn.primary{background:var(--accent); color:#fff;}
+  .btn.ghost{background:var(--card); color:var(--muted); box-shadow:inset 0 0 0 2px var(--line);}
+  .btn:active{filter:brightness(.94);}
+  .actions{display:flex; gap:10px;}
+  .actions .btn{flex:1 1 0;}
+  .actions .btn.back{flex:0 0 34%;}
+
+  /* Change is an escape hatch, not an action. Small, quiet, off to one side —
+     still a 44px-tall target, just visually recessive. */
+  .changerow{display:flex; justify-content:center; gap:4px;}
+  .btn.quiet{width:auto; padding:12px 20px; font-size:15px; font-weight:500;
+             background:none; color:var(--muted); box-shadow:none;
+             text-decoration:underline; text-underline-offset:3px;
+             text-decoration-color:var(--line);}
+
+  .confirm{display:flex; flex-direction:column; gap:12px;}
+  .ask{margin:0; padding:18px 16px; border-radius:16px; background:var(--warn-soft);
+       text-align:center; font-size:20px; line-height:1.35; font-weight:600;
+       color:var(--ink);}
+
+  /* no panel — it carries on weight and size alone */
+  .quote{margin:0; padding:0 8px; text-align:center; font-size:20px; line-height:1.4;
+         font-weight:700; color:var(--ink); font-style:italic; letter-spacing:-.01em;}
+
+  /* Everything is set and the fast has not begun. Nothing to do but wait. */
+  .watch{display:flex; justify-content:center;}
+  .watch svg{width:64px; height:72px;}
+  .watch .case{fill:var(--accent-soft); stroke:var(--accent); stroke-width:4;}
+  .watch .part{fill:none; stroke:var(--accent); stroke-width:4;
+               stroke-linecap:round; stroke-linejoin:round;}
+
+  /* The reward for seeing a fast through. Sparse on purpose — more to come. */
+  .tick{display:flex; justify-content:center;}
+  .tick svg{width:140px; height:140px;}
+  .tick-ring{fill:var(--accent-soft); stroke:none;}
+  .tick-mark{fill:none; stroke:var(--accent); stroke-width:11;
+             stroke-linecap:round; stroke-linejoin:round;
+             stroke-dasharray:70; stroke-dashoffset:70;
+             animation:draw .45s .2s cubic-bezier(.65,0,.35,1) forwards;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  .wd{margin:0; text-align:center; font-size:30px; font-weight:700; letter-spacing:-.02em;}
+  .wdsub{margin:0; text-align:center; font-size:17px; line-height:1.4; color:var(--muted);}
+
+  /* ---- settings, reached by the cog on the opening screen ---- */
+  /* The cog belongs to the opening screen only. Everywhere else the app shows
+     one thing at a time, and a fast under way is not the moment for settings. */
+  .cog{position:fixed; z-index:2; top:calc(env(safe-area-inset-top) + 6px); right:10px;
+       width:44px; height:44px; padding:0; border:0; background:none; cursor:pointer;
+       touch-action:manipulation; display:flex; align-items:center; justify-content:center;
+       opacity:0; pointer-events:none; transition:opacity .28s ease;}
+  body.landing .cog{opacity:1; pointer-events:auto;}
+  body.landing .cog:active{opacity:.5;}
+  .cog svg{width:25px; height:25px; fill:none; stroke:var(--muted);
+           stroke-width:2.2; stroke-linecap:round;}
+  /* Over a photo it has no scrim behind it, so it goes white with a soft shadow
+     — readable on a dark sky or a bright beach alike. */
+  body.hasphoto .cog svg{stroke:#fff; filter:drop-shadow(0 2px 7px rgba(0,0,0,.6));}
+
+  .hint{margin:0; text-align:center; font-size:15px; line-height:1.45; color:var(--muted);}
+  .setgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .thumb{position:relative; aspect-ratio:3/4; min-height:98px;
+         border-radius:14px; overflow:hidden; background:var(--track);}
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  /* Removing is a plain tap with no question asked. The photo is still in her
+     camera roll, so nothing is lost and she can add it back. */
+  .thumb .x{position:absolute; top:5px; right:5px; width:30px; height:30px; padding:0;
+            border:0; border-radius:50%; background:rgba(0,0,0,.55); color:#fff;
+            font:600 18px/1 inherit; cursor:pointer; touch-action:manipulation;
+            display:flex; align-items:center; justify-content:center;}
+
+  /* ---- the strip of photos under the timer ---- */
+  /* Small on purpose. It is a reminder of why she is doing this, sitting below
+     the fast rather than competing with it. Native horizontal scrolling, so it
+     gets iOS momentum and rubber-banding for free. */
+  .strip{display:flex; gap:8px; overflow-x:auto; scroll-snap-type:x mandatory;
+         -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
+  .strip::-webkit-scrollbar{display:none;}
+  /* width AND min-width both matter: without min-width a flex item is not
+     allowed to go below its own natural proportions, so a landscape photo
+     shoulders its way past 88px and knocks the whole strip out of step. */
+  .strip img{flex:0 0 88px; width:88px; min-width:0; height:116px;
+             object-fit:cover; border-radius:14px;
+             scroll-snap-align:start; background:var(--track);
+             cursor:pointer; touch-action:manipulation;}
+  .strip img:active{filter:brightness(.92);}
+
+  /* ---- one photo, opened up ---- */
+  /* Whole-photo, not cropped: she opened it to look at it. Black behind, so
+     nothing competes with it, and every way out is a tap. */
+  .viewer{position:fixed; inset:0; z-index:10; background:#000;
+          display:flex; align-items:center; justify-content:center;
+          padding:calc(env(safe-area-inset-top) + 56px) 0 calc(env(safe-area-inset-bottom) + 34px);
+          opacity:0; transition:opacity .22s ease; touch-action:pan-y pinch-zoom;}
+  .viewer.on{opacity:1;}
+  .viewer img{max-width:100%; max-height:100%; object-fit:contain; display:block;}
+  .vclose{position:absolute; top:calc(env(safe-area-inset-top) + 6px); right:12px;
+          width:44px; height:44px; padding:0; border:0; border-radius:50%;
+          background:rgba(255,255,255,.16); color:#fff;
+          font:300 27px/1 inherit; cursor:pointer; touch-action:manipulation;
+          display:flex; align-items:center; justify-content:center;}
+  .vclose:active{background:rgba(255,255,255,.3);}
+  .vdots{position:absolute; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 12px);
+         display:flex; flex-wrap:wrap; justify-content:center; gap:9px; padding:0 20px;}
+  .vdots i{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.38);}
+  .vdots i.on{background:#fff;}
+
+  @keyframes swapin{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .swapin{animation:swapin .25s ease;}
+
+  @media (prefers-reduced-motion: reduce){
+    .page > *{transition-duration:.01ms; transform:none;}
+    .photos, .photo, .cog, .viewer{transition:none;}
+    .tick-mark{animation:none; stroke-dashoffset:0;}
+    .arc-fill{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="photos" id="photos" hidden>
+  <div class="photo" id="photoA"></div>
+  <div class="photo" id="photoB"></div>
+</div>
+<button class="cog" id="btnCog" aria-label="Settings">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="7.4"/>
+    <circle cx="12" cy="12" r="2.7"/>
+    <path d="M19.4 12 L22.2 12 M17.23 6.77 L19.21 4.79 M12 4.6 L12 1.8
+             M6.77 6.77 L4.79 4.79 M4.6 12 L1.8 12 M6.77 17.23 L4.79 19.21
+             M12 19.4 L12 22.2 M17.23 17.23 L19.21 19.21"/>
+  </svg>
+</button>
+<input type="file" id="pick" accept="image/*" multiple hidden>
+
+<div class="viewer" id="viewer" hidden>
+  <img id="viewerImg" alt="">
+  <button class="vclose" id="viewerClose" aria-label="Close">&times;</button>
+  <div class="vdots" id="viewerDots"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- opening screen -->
+  <section class="page" id="pgHome" hidden>
+    <div class="dots" id="dots" hidden></div>
+    <button class="btn primary big" id="btnStart">Start</button>
+    <button class="btn ghost" id="btnCal">Calendar</button>
+  </section>
+
+  <!-- calendar -->
+  <section class="page" id="pgCal" hidden>
+    <div class="calhead">
+      <button class="navbtn" id="calPrev" aria-label="Previous month">&lsaquo;</button>
+      <span class="m" id="calMonth"></span>
+      <button class="navbtn" id="calNext" aria-label="Next month">&rsaquo;</button>
+    </div>
+    <div class="grid" id="calDow"></div>
+    <div class="grid" id="calGrid"></div>
+    <p class="legend">
+      <span class="yes"><i></i>Done</span>
+      <span class="no"><i></i>Missed</span>
+    </p>
+    <button class="btn ghost" id="calBack">Back</button>
+  </section>
+
+  <!-- settings -->
+  <section class="page" id="pgSet" hidden>
+    <h2 class="q">Settings</h2>
+    <p class="hint" id="setHint"></p>
+    <button class="btn primary" id="btnAdd">Add photos</button>
+    <div class="setgrid" id="mineGrid" hidden></div>
+    <button class="btn ghost" id="setBack">Back</button>
+  </section>
+
+  <!-- step 1 -->
+  <section class="page" id="pgLength" hidden>
+    <h2 class="q">How long?</h2>
+    <div class="wheelbox"><div class="band"></div><div class="scroller" id="lenCol"></div></div>
+    <div class="actions">
+      <button class="btn ghost back" id="btnCancel">Back</button>
+      <button class="btn primary" id="btnNext">Next</button>
+    </div>
+  </section>
+
+  <!-- step 2 -->
+  <section class="page" id="pgTime" hidden>
+    <h2 class="q">Start at?</h2>
+    <div class="pickrow">
+      <button type="button" class="lenbox" id="btnLenBack">
+        <span class="lab">Length</span>
+        <span class="v" id="lenChip"></span>
+      </button>
+      <div class="wheelbox"><div class="band"></div><div class="scroller" id="startCol"></div></div>
+    </div>
+    <div class="finish">
+      <span class="lab">Finishing at</span>
+      <span class="t" id="finishTime"></span>
+    </div>
+    <div class="actions">
+      <button class="btn ghost back" id="btnBack">Back</button>
+      <button class="btn primary" id="btnSet">Set</button>
+    </div>
+  </section>
+
+  <!-- the fast itself -->
+  <section class="page" id="pgTimer" hidden>
+    <div class="watch" id="watch" hidden>
+      <svg viewBox="0 0 64 72" aria-hidden="true">
+        <circle class="part" cx="32" cy="7" r="4.5"/>
+        <path class="part" d="M32 12 L32 17"/>
+        <circle class="case" cx="32" cy="44" r="24"/>
+        <path class="part" d="M32 44 L32 30 M32 44 L41 50"/>
+      </svg>
+    </div>
+    <p class="quote" id="quote" hidden></p>
+    <div class="gauge">
+      <svg class="arc" viewBox="0 0 240 130" aria-hidden="true">
+        <path class="arc-track" d="M 20 116 A 100 100 0 0 1 220 116"/>
+        <path class="arc-fill"  d="M 20 116 A 100 100 0 0 1 220 116" id="fill"/>
+      </svg>
+      <div class="readout">
+        <div class="cap" id="cap"></div>
+        <div class="big time" id="big"></div>
+        <div class="sub" id="sub"></div>
+      </div>
+    </div>
+    <div class="finish" id="eatBox" hidden>
+      <span class="lab">Can eat again at</span>
+      <span class="t" id="eatTime"></span>
+    </div>
+    <div class="strip" id="strip" hidden></div>
+    <div class="changerow" id="changeRow">
+      <button class="btn quiet" id="btnChange">Change</button>
+      <button class="btn quiet" id="btnGive" hidden>Give up</button>
+    </div>
+    <div class="confirm" id="confirmRow" hidden>
+      <p class="ask" id="ask"></p>
+      <button class="btn primary" id="btnKeep">Keep going</button>
+      <div class="changerow">
+        <button class="btn quiet" id="btnYes">Yes, change it</button>
+      </div>
+    </div>
+  </section>
+  <!-- she saw it through -->
+  <section class="page" id="pgDone" hidden>
+    <div class="tick">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="tick-ring" cx="60" cy="60" r="56"/>
+        <path class="tick-mark" d="M38 62 L54 78 L84 44"/>
+      </svg>
+    </div>
+    <h2 class="wd">Well done</h2>
+    <p class="wdsub" id="doneSub"></p>
+    <button class="btn primary big" id="btnDone">Done</button>
+    <div class="changerow">
+      <button class="btn quiet" id="btnBroke">I broke this fast</button>
+    </div>
+  </section>
+</div>
+
+<script src="quotes.js"></script>
+<script src="photos.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  var KEY='fastingApp.v1', STEP=30, ROW=44, ARC=Math.PI*100;
+  var LEN_MIN=60, LEN_MAX=1380, LEN_STEP=60; // fast length: whole hours, 1h to 23h
+
+  // ---------- time helpers (device clock only) ----------
+  function toMins(hhmm){ var p=hhmm.split(':'); return (+p[0])*60 + (+p[1]); }
+  function toHHMM(m){ m=((m%1440)+1440)%1440;
+    return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+  function snapHHMM(hhmm){ return toHHMM(Math.round(toMins(hhmm)/STEP)*STEP); }
+  function snapLen(m){ m=Math.round(m/LEN_STEP)*LEN_STEP; return Math.max(LEN_MIN, Math.min(LEN_MAX, m)); }
+
+  function labelDate(d){
+    return d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true})
+            .replace(/\s*(am|pm)\.?$/i, function(_,x){ return ' '+x.toUpperCase(); });
+  }
+  function label(mins){
+    var d=new Date();
+    d.setHours(Math.floor(((mins%1440)+1440)%1440/60), mins%60, 0, 0);
+    return labelDate(d);
+  }
+  function lenLabel(m){ var h=Math.floor(m/60), mm=m%60; return mm ? h+'h '+mm+'m' : h+'h'; }
+  function hms(ms){
+    var s=Math.max(0,Math.floor(ms/1000));
+    return Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  }
+  function durText(ms){
+    var m=Math.floor(ms/60000);
+    if(m<60) return m+' minute'+(m===1?'':'s');
+    var h=Math.floor(m/60), r=m%60;
+    return h+'h'+(r? ' '+r+'m' : '');
+  }
+  function spanMins(a,b){ var d=toMins(b)-toMins(a); if(d<=0) d+=1440; return d; }
+
+  // ---------- state ----------
+  // draftLen / draftStart = what the two wheels show.
+  // fast = ONE scheduled fast, committed by Set. It never repeats: once it is
+  //        over she sets a new one the next day.
+  function migrate(o){
+    if(!o) return null;
+    if(o.version===5) return o;
+    // v4 is the same shape plus the day log, so a fast in flight survives.
+    if(o.version===4)
+      return { version:5, draftLen:o.draftLen, draftStart:o.draftStart, fast:o.fast,
+               quoteIdx:o.quoteIdx, log:{} };
+    if(o.version===3 || o.version===2)
+      return { version:5, draftLen:spanMins(o.draftStart,o.draftFinish), draftStart:o.draftStart, fast:null, log:{} };
+    if(o.version===1)
+      return { version:5, draftLen:spanMins(o.startHHMM,o.finishHHMM), draftStart:o.startHHMM, fast:null, log:{} };
+    return null;
+  }
+  var migrated=false;
+  function load(){
+    try{
+      var raw=localStorage.getItem(KEY); if(!raw) return null;
+      var parsed=JSON.parse(raw), out=migrate(parsed);
+      if(out && parsed.version!==5) migrated=true;
+      return out;
+    }catch(e){ return null; }
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+  var state = load() || { version:5, draftLen:840, draftStart:'17:00', fast:null, log:{} };
+  if(!state.log || typeof state.log!=='object') state.log={};
+  state.draftStart = snapHHMM(state.draftStart);   // wheels only move in STEP increments
+  state.draftLen   = snapLen(state.draftLen);
+
+  // The chosen line is held in state, so it stays put through the once-a-second
+  // repaint, and is rolled only when she opens the app or brings it back to the
+  // front. Never the same line twice running. Absent quotes.js, no quote shows.
+  function quoteList(){ var l=window.QUOTES; return (l && l.length) ? l : null; }
+  function rollQuote(){
+    var l=quoteList(); if(!l) return;
+    var n=l.length, i=state.quoteIdx, j=0;
+    if(n>1){ do{ j=Math.floor(Math.random()*n); }while(j===i); }
+    state.quoteIdx=j; save();
+  }
+  // Her own photos, named in photos.js. Two stacked layers so one fades into
+  // the next, and she swipes sideways across the opening screen to move
+  // between them. Each is loaded before it is shown, so a missing or misspelt
+  // file is quietly dropped from the run rather than leaving a dark screen.
+  //
+  // Two sources, one run. The ones named in photos.js ship with the app; the
+  // ones she adds herself live on the phone in IndexedDB, because there is no
+  // server to put them on. Her own go on the end, so adding one never shuffles
+  // the others out from under her.
+  var bundled  = (window.PHOTOS || []).slice(),
+      mine     = [],     // [{id, url}] — hers, as object URLs onto the stored files
+      photos   = bundled.slice(),
+      photoTop = 0,      // which layer is on top, 0 = A
+      photoAt  = -1,     // index currently on screen, -1 = none painted yet
+      photoWant= -1,     // index most recently asked for, so a slow load loses
+      photosReady = false;
+
+  function rebuildPhotos(){
+    photos = bundled.concat(mine.map(function(m){ return m.url; }));
+    // Until she has added any, the opening screen is just the two buttons, and
+    // they belong in the middle rather than stranded at the foot of an empty
+    // screen waiting for a photo that is not there.
+    document.body.classList.toggle('nophotos', !photos.length);
+    stripDirty = true;
+  }
+  rebuildPhotos();
+
+  // ---------- her own photos, stored on the phone ----------
+  // localStorage is the wrong shelf for these: it holds text, so a photo would
+  // have to be base64 and the whole 5MB budget is gone after one. IndexedDB
+  // holds the file itself and has room for hundreds. Like the fast log, it
+  // survives indefinitely because this is a home-screen app — but it lives only
+  // on her phone, so a photo she adds is hers alone and never leaves the device.
+  var DBNAME='fastingPhotos', STORE='photos', DB=null, MAXPX=1400;
+
+  function openDB(cb){
+    if(DB) return cb(DB);
+    var r;
+    try{ r=indexedDB.open(DBNAME,1); }catch(e){ return cb(null); }
+    r.onupgradeneeded=function(){
+      try{ r.result.createObjectStore(STORE,{keyPath:'id'}); }catch(e){}
+    };
+    r.onsuccess=function(){ DB=r.result; cb(DB); };
+    r.onerror=r.onblocked=function(){ cb(null); };
+  }
+  function store(mode, cb){
+    openDB(function(db){
+      if(!db) return cb(null);
+      try{ cb(db.transaction(STORE,mode).objectStore(STORE)); }catch(e){ cb(null); }
+    });
+  }
+  function loadMine(cb){
+    store('readonly', function(st){
+      if(!st) return cb();
+      var r;
+      try{ r=st.getAll(); }catch(e){ return cb(); }
+      r.onsuccess=function(){
+        var rows=r.result||[];
+        rows.sort(function(a,b){ return (a.added||0)-(b.added||0); });
+        for(var i=0;i<rows.length;i++){
+          try{ mine.push({id:rows[i].id, url:URL.createObjectURL(rows[i].blob)}); }catch(e){}
+        }
+        cb();
+      };
+      r.onerror=function(){ cb(); };
+    });
+  }
+  function putPhoto(rec, cb){
+    store('readwrite', function(st){
+      if(!st) return cb(false);
+      var r;
+      try{ r=st.put(rec); }catch(e){ return cb(false); }
+      r.onsuccess=function(){ cb(true); };
+      r.onerror=function(){ cb(false); };
+    });
+  }
+  function delPhoto(id, cb){
+    store('readwrite', function(st){
+      if(!st) return cb();
+      var r;
+      try{ r=st.delete(id); }catch(e){ return cb(); }
+      r.onsuccess=r.onerror=function(){ cb(); };
+    });
+  }
+
+  // A photo off an iPhone is 3-4MB, and she might add dozens. Shrinking to
+  // 1400px on the long edge takes each one to a couple of hundred KB, which
+  // opens instantly and still looks right on any screen she owns. Picking from
+  // the photo library also hands us a JPEG even when the original is HEIC, so
+  // there is no format to wrestle with.
+  function shrink(file, cb){
+    var url, img=new Image();
+    try{ url=URL.createObjectURL(file); }catch(e){ return cb(null); }
+    img.onload=function(){
+      var w=img.naturalWidth, h=img.naturalHeight;
+      if(!w || !h){ URL.revokeObjectURL(url); return cb(null); }
+      var k=Math.min(1, MAXPX/Math.max(w,h)), c=document.createElement('canvas');
+      c.width=Math.round(w*k); c.height=Math.round(h*k);
+      try{ c.getContext('2d').drawImage(img,0,0,c.width,c.height); }
+      catch(e){ URL.revokeObjectURL(url); return cb(null); }
+      URL.revokeObjectURL(url);
+      if(!c.toBlob) return cb(null);
+      c.toBlob(function(b){ cb(b||null); }, 'image/jpeg', .82);
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); cb(null); };
+    img.src=url;
+  }
+
+  // One at a time, so a fistful of photos cannot spike memory. A file that will
+  // not decode is skipped rather than allowed to break the run.
+  function importFiles(list, done){
+    var files=[].slice.call(list||[]), added=0, i=0;
+    (function next(){
+      if(i>=files.length) return done(added, files.length);
+      shrink(files[i++], function(blob){
+        if(!blob) return next();
+        var rec={ id:String(Date.now())+'-'+Math.random().toString(36).slice(2,8),
+                  blob:blob, added:Date.now() };
+        putPhoto(rec, function(ok){
+          if(ok){
+            try{ mine.push({id:rec.id, url:URL.createObjectURL(blob)}); added++; }catch(e){}
+          }
+          next();
+        });
+      });
+    })();
+  }
+
+  function photoIdx(){
+    var n=photos.length; if(!n) return 0;
+    var i=state.photoIdx;
+    return (typeof i==='number' && i>=0 && i<n) ? i : 0;
+  }
+  // A different photo from the one she saw last time, never the same twice running.
+  function rollPhoto(){
+    var n=photos.length; if(n<2) return;
+    var i=photoIdx(), j=i;
+    do{ j=Math.floor(Math.random()*n); }while(j===i);
+    state.photoIdx=j; save();
+  }
+  function clearPhoto(){
+    elPhotoWrap.hidden=true; elDots.hidden=true;
+    document.body.classList.remove('hasphoto');
+    photoAt=-1;
+  }
+  function paintDots(){
+    if(photos.length<2){ elDots.hidden=true; return; }
+    var out='';
+    for(var i=0;i<photos.length;i++) out+='<i'+(i===photoAt?' class="on"':'')+'></i>';
+    elDots.innerHTML=out; elDots.hidden=false;
+  }
+  function showPhoto(i){
+    var n=photos.length;
+    if(!n){ clearPhoto(); return; }
+    i=((i%n)+n)%n;
+    if(i===photoAt && i===photoWant) return;
+    photoWant=i;
+    var src=photos[i], img=new Image();
+    img.onload=function(){
+      if(photoWant!==i) return;               // she swiped past it while it loaded
+      var top = photoTop ? elPhotoB : elPhotoA,
+          nxt = photoTop ? elPhotoA : elPhotoB;
+      nxt.style.backgroundImage='url("'+src+'")';
+      top.classList.remove('on'); nxt.classList.add('on');
+      photoTop ^= 1; photoAt = i;
+      state.photoIdx = i; save();
+      elPhotoWrap.hidden=false;
+      document.body.classList.add('hasphoto');
+      paintDots();
+    };
+    img.onerror=function(){
+      var bad=photos.indexOf(src);
+      if(bad>-1) photos.splice(bad,1);        // one fewer each time, so this ends
+      photoWant=-1;
+      if(photos.length) showPhoto(bad); else clearPhoto();
+    };
+    img.src=src;
+  }
+
+  // Swiping moves between her photos, both across the opening screen and inside
+  // an opened one. Only a clearly sideways drag counts, and the tap that would
+  // follow one is swallowed — so swiping over the buttons never starts a fast,
+  // and swiping in the viewer never closes it.
+  var swipeX=0, swipeY=0, swiping=false, swipedAt=0;
+  document.addEventListener('pointerdown', function(e){
+    swiping = (viewerOpen() || document.body.classList.contains('landing'))
+              && photos.length>1;
+    swipeX=e.clientX; swipeY=e.clientY;
+  });
+  document.addEventListener('pointercancel', function(){ swiping=false; });
+  document.addEventListener('pointerup', function(e){
+    if(!swiping) return;
+    swiping=false;
+    var dx=e.clientX-swipeX, dy=e.clientY-swipeY;
+    if(Math.abs(dx)<45 || Math.abs(dx)<Math.abs(dy)*1.5) return;
+    swipedAt=Date.now();
+    var step = dx<0 ? 1 : -1;
+    if(viewerOpen()) showInViewer(viewAt+step); else showPhoto(photoAt+step);
+  });
+  document.addEventListener('click', function(e){
+    if(Date.now()-swipedAt < 500){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  function currentQuote(){
+    var l=quoteList(); if(!l) return null;
+    var i=state.quoteIdx;
+    return l[(typeof i==='number' && i>=0 && i<l.length) ? i : 0];
+  }
+
+  // A fast belongs to the day it STARTED on — she thinks of it as "Thursday's
+  // fast" even though it runs into Friday morning, so an overnight fast marks
+  // the evening she began it, not the morning it ended.
+  //
+  // The day itself runs 4am to 4am rather than midnight to midnight. Without
+  // that, a fast begun at half past midnight would be filed under the new date
+  // on the clock, when to her it is still the night before. Moving the border
+  // is one rule with no special cases; it needs no notion of what counts as
+  // "morning" and leaves a daytime fast exactly where it belongs.
+  // Device clock only.
+  var DAY_EDGE=4;                                    // hours past midnight
+  function dayDate(ms){ return new Date(ms - DAY_EDGE*3600000); }
+  function dayKey(ms){
+    var d=dayDate(ms);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+                          +'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function markDay(ms, ok){
+    var k=dayKey(ms);
+    if(state.log[k]===ok) return;
+    state.log[k]=ok; save();
+  }
+  function unmarkDay(ms){
+    var k=dayKey(ms);
+    if(!(k in state.log)) return;
+    delete state.log[k]; save();
+  }
+
+  function phase(){
+    var f=state.fast;
+    if(!f) return 'unset';
+    var now=Date.now();
+    if(now < f.startsAt) return 'armed';
+    if(now < f.endsAt)   return 'fasting';
+    return 'complete';
+  }
+
+  // ---------- wheels ----------
+  function buildWheel(el, labels, getIdx, setIdx){
+    var f=document.createDocumentFragment();
+    for(var i=0;i<labels.length;i++){
+      var r=document.createElement('div');
+      r.className='row'; r.textContent=labels[i];
+      f.appendChild(r);
+    }
+    el.appendChild(f);
+
+    var rows=el.children, cur=-1, timer=null;
+    function mark(i){
+      if(i===cur) return;
+      if(rows[cur]) rows[cur].classList.remove('sel');
+      if(rows[i]) rows[i].classList.add('sel');
+      cur=i;
+    }
+    function idx(){ return Math.max(0, Math.min(rows.length-1, Math.round(el.scrollTop/ROW))); }
+
+    el.addEventListener('scroll', function(){
+      if(!el.clientHeight) return;            // hidden page: scrollTop is meaningless
+      mark(idx());
+      clearTimeout(timer);
+      timer=setTimeout(function(){
+        if(!el.clientHeight) return;
+        setIdx(idx()); save(); render();
+      },120);
+    }, {passive:true});
+
+    return function sync(){ var i=getIdx(); el.scrollTop=i*ROW; mark(i); };
+  }
+
+  var lenLabels=[], lenIdxToMins=[];
+  for(var m=LEN_MIN; m<=LEN_MAX; m+=LEN_STEP){ lenLabels.push(lenLabel(m)); lenIdxToMins.push(m); }
+  var syncLen = buildWheel(document.getElementById('lenCol'), lenLabels,
+    function(){ return (state.draftLen-LEN_MIN)/LEN_STEP; },
+    function(i){ state.draftLen=lenIdxToMins[i]; });
+
+  var timeLabels=[];
+  for(var t=0; t<1440; t+=STEP) timeLabels.push(label(t));
+  var syncStart = buildWheel(document.getElementById('startCol'), timeLabels,
+    function(){ return toMins(state.draftStart)/STEP; },
+    function(i){ state.draftStart=toHHMM(i*STEP); });
+
+  // ---------- elements ----------
+  var elFinishTime=document.getElementById('finishTime'),
+      elLenChip=document.getElementById('lenChip'),
+      elCap=document.getElementById('cap'),
+      elBig=document.getElementById('big'),
+      elSub=document.getElementById('sub'),
+      elFill=document.getElementById('fill'),
+      elQuote=document.getElementById('quote'),
+      elChangeRow=document.getElementById('changeRow'),
+      elConfirm=document.getElementById('confirmRow'),
+      elAsk=document.getElementById('ask'),
+      elChange=document.getElementById('btnChange'),
+      elGive=document.getElementById('btnGive'),
+      elYes=document.getElementById('btnYes'),
+      elEatBox=document.getElementById('eatBox'),
+      elEatTime=document.getElementById('eatTime'),
+      elDoneSub=document.getElementById('doneSub'),
+      elWatch=document.getElementById('watch'),
+      elStart=document.getElementById('btnStart'),
+      elCancel=document.getElementById('btnCancel'),
+      elPhotoWrap=document.getElementById('photos'),
+      elPhotoA=document.getElementById('photoA'),
+      elPhotoB=document.getElementById('photoB'),
+      elDots=document.getElementById('dots'),
+      elStrip=document.getElementById('strip'),
+      elViewer=document.getElementById('viewer'),
+      elViewImg=document.getElementById('viewerImg'),
+      elViewDots=document.getElementById('viewerDots'),
+      elPick=document.getElementById('pick'),
+      elMineGrid=document.getElementById('mineGrid'),
+      elSetHint=document.getElementById('setHint'),
+      elCalMonth=document.getElementById('calMonth'),
+      elCalGrid=document.getElementById('calGrid'),
+      elCalNext=document.getElementById('calNext');
+
+  elFill.style.strokeDasharray=ARC;
+
+  // ---------- render ----------
+  function render(){
+    elFinishTime.textContent = label(toMins(state.draftStart)+state.draftLen);
+    elLenChip.textContent    = lenLabel(state.draftLen);
+
+    var f=state.fast, p=phase(), progress=0, done=false;
+    if(p==='fasting'){
+      var total=f.endsAt-f.startsAt, elapsed=Date.now()-f.startsAt;
+      progress=Math.min(1, elapsed/total);
+      elCap.textContent='Fasting';
+      elBig.textContent=hms(elapsed); elBig.classList.remove('time');
+      elSub.textContent='of '+lenLabel(Math.round(total/60000));
+    }else if(p==='armed'){
+      elCap.textContent='Starting at';                     // no counter before it begins
+      elBig.textContent=labelDate(new Date(f.startsAt)); elBig.classList.add('time');
+      elSub.textContent='Get ready';
+    }else if(p==='complete'){
+      markDay(f.startsAt, true);         // she saw it through
+      progress=1; done=true;
+      elDoneSub.textContent='You finished your '+lenLabel(f.lenMins)+' fast.';
+    }
+
+    elWatch.hidden = p!=='armed';        // set, and waiting to begin
+
+    // Backing out of the pickers leaves her on the opening screen, so that
+    // screen has to lead back to a fast she already has. Otherwise it would be
+    // stranded there until she closed the app.
+    elStart.textContent = state.fast ? 'Your fast' : 'Start';
+
+    // The one thing she actually wants to know while a fast is running.
+    var running = p==='fasting';
+    elEatBox.hidden = !running;
+    elGive.hidden   = !running;
+    if(running) elEatTime.textContent = labelDate(new Date(f.endsAt));
+
+    // Her photos, small, under the fast. Only while it is actually running —
+    // before it starts the page is deliberately bare but for the watch.
+    if(running && stripDirty) buildStrip();
+    elStrip.hidden = !running || !elStrip.children.length;
+
+    var q = p==='fasting' ? currentQuote() : null;
+    elQuote.hidden = !q;
+    if(q) elQuote.textContent = '\u201C'+q+'\u201D';
+
+    document.body.classList.toggle('done', done);
+    elFill.style.strokeDashoffset = ARC*(1-progress);
+  }
+
+  // ---------- the strip under the timer ----------
+  // Rebuilt only when the set of photos actually changes. The timer repaints
+  // every second, and rebuilding here would throw away her place in the strip
+  // once a second.
+  var stripDirty=true;
+
+  function buildStrip(){
+    var out='';
+    for(var i=0;i<photos.length;i++)
+      out+='<img src="'+photos[i]+'" alt="" loading="lazy">';
+    elStrip.innerHTML=out;
+    stripDirty=false;
+  }
+  // A photo that will not load drops out of the strip rather than sitting there
+  // as a broken box. Errors do not bubble, hence the capture phase.
+  elStrip.addEventListener('error', function(e){
+    if(e.target && e.target.tagName==='IMG') e.target.remove();
+  }, true);
+
+  // Tapping a photo opens it up, whole and full screen. The strip is scrolled
+  // by swiping it; the tap is spent on the one thing she actually wants.
+  elStrip.addEventListener('click', function(e){
+    var img=e.target;
+    if(!img || img.tagName!=='IMG') return;
+    // Matched on the file rather than the position, because a photo that failed
+    // to load has already been dropped from the strip and the two would differ.
+    var i=photos.indexOf(img.getAttribute('src'));
+    if(i<0) i=[].indexOf.call(elStrip.children, img);
+    if(i>=0) openViewer(i);
+  });
+
+  // ---------- one photo, opened up ----------
+  var viewAt=-1;
+  function viewerOpen(){ return !elViewer.hidden; }
+  function paintViewDots(){
+    if(photos.length<2){ elViewDots.hidden=true; return; }
+    var out='';
+    for(var i=0;i<photos.length;i++) out+='<i'+(i===viewAt?' class="on"':'')+'></i>';
+    elViewDots.innerHTML=out; elViewDots.hidden=false;
+  }
+  function showInViewer(i){
+    var n=photos.length; if(!n) return;
+    viewAt=((i%n)+n)%n;
+    elViewImg.src=photos[viewAt];
+    paintViewDots();
+  }
+  function openViewer(i){
+    if(!photos.length) return;
+    showInViewer(i);
+    elViewer.hidden=false;
+    requestAnimationFrame(function(){ elViewer.classList.add('on'); });
+  }
+  function closeViewer(){
+    if(!viewerOpen()) return;
+    elViewer.classList.remove('on');
+    setTimeout(function(){
+      if(elViewer.classList.contains('on')) return;   // she opened it again in the meantime
+      elViewer.hidden=true;
+      elViewImg.removeAttribute('src');               // let go of the full-size image
+      viewAt=-1;
+    }, 240);
+  }
+  // Every way out is a tap: the cross, or anywhere on the photo. A swipe is not
+  // a tap, and the swallower above keeps the tail of one from closing it.
+  elViewer.addEventListener('click', function(){ closeViewer(); });
+
+  // ---------- settings ----------
+  function renderMine(){
+    var out='';
+    for(var i=0;i<mine.length;i++)
+      out+='<div class="thumb"><img src="'+mine[i].url+'" alt="">'
+         + '<button class="x" type="button" data-id="'+mine[i].id+'" aria-label="Remove photo">\u00D7</button></div>';
+    elMineGrid.innerHTML=out;
+    elMineGrid.hidden = !mine.length;
+  }
+  function setHint(){
+    elSetHint.textContent = mine.length
+      ? 'Your photos show on the opening screen and while you are fasting. Tap \u00D7 to remove one.'
+      : 'Add photos of your own. They show on the opening screen and while you are fasting.';
+  }
+  elMineGrid.addEventListener('click', function(e){
+    var b=e.target.closest ? e.target.closest('.x') : null;
+    if(!b) return;
+    var id=b.getAttribute('data-id');
+    delPhoto(id, function(){
+      for(var i=0;i<mine.length;i++) if(mine[i].id===id){
+        try{ URL.revokeObjectURL(mine[i].url); }catch(e2){}
+        mine.splice(i,1); break;
+      }
+      rebuildPhotos();
+      photoAt=-1; photoWant=-1;        // whatever was on screen may have been it
+      renderMine(); setHint(); paintDots(); render();
+    });
+  });
+
+  document.getElementById('btnCog').addEventListener('click', function(){ go('pgSet'); });
+  document.getElementById('setBack').addEventListener('click', function(){ go('pgHome'); });
+  document.getElementById('btnAdd').addEventListener('click', function(){ elPick.click(); });
+  elPick.addEventListener('change', function(){
+    var files=elPick.files;
+    if(!files || !files.length) return;
+    elSetHint.textContent='Adding\u2026';
+    importFiles(files, function(added, tried){
+      elPick.value='';                 // so picking the same photo again still fires
+      rebuildPhotos();
+      renderMine(); paintDots(); render();
+      if(added===tried && added) elSetHint.textContent = added===1 ? 'Photo added.' : added+' photos added.';
+      else if(added)             elSetHint.textContent = added+' of '+tried+' added. The rest could not be read.';
+      else                       elSetHint.textContent = 'That could not be added. Try another photo.';
+    });
+  });
+
+  // ---------- calendar ----------
+  var calCursor=null;                    // first of the month on show
+
+  (function buildDow(){
+    var names=['M','T','W','T','F','S','S'], out='';
+    for(var i=0;i<7;i++) out+='<span class="dow">'+names[i]+'</span>';
+    document.getElementById('calDow').innerHTML=out;
+  })();
+
+  function renderCal(){
+    var now=dayDate(Date.now());                     // the day she is on, by that border
+    if(!calCursor) calCursor=new Date(now.getFullYear(), now.getMonth(), 1);
+    var y=calCursor.getFullYear(), m=calCursor.getMonth();
+
+    elCalMonth.textContent = calCursor.toLocaleDateString('en-AU',{month:'long', year:'numeric'});
+
+    var lead=(new Date(y,m,1).getDay()+6)%7;        // weeks start Monday
+    var days=new Date(y,m+1,0).getDate();
+    var todayKey=dayKey(Date.now()), out='';
+
+    for(var i=0;i<lead;i++) out+='<span class="day blank"></span>';
+    for(var d=1;d<=days;d++){
+      var k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var v=state.log[k], c='day';
+      if(v===true) c+=' done'; else if(v===false) c+=' miss';
+      if(k===todayKey) c+=' today';
+      out+='<span class="'+c+'">'+d+'</span>';
+    }
+    elCalGrid.innerHTML=out;
+    elCalNext.disabled = (y>now.getFullYear() || (y===now.getFullYear() && m>=now.getMonth()));
+  }
+
+  function stepMonth(n){
+    calCursor=new Date(calCursor.getFullYear(), calCursor.getMonth()+n, 1);
+    renderCal();
+  }
+  document.getElementById('calPrev').addEventListener('click', function(){ stepMonth(-1); });
+  elCalNext.addEventListener('click', function(){ if(!elCalNext.disabled) stepMonth(1); });
+
+  // ---------- page transitions ----------
+  // Where the app belongs right now. A finished fast owes her the reward screen
+  // and keeps owing it until she has actually seen it and pressed Done, so it
+  // survives being closed, and being left alone for days.
+  function openPage(){
+    if(!state.fast)        return 'pgHome';
+    if(phase()==='complete') return 'pgDone';
+    return 'pgTimer';
+  }
+
+  var cur=null;
+  function onShow(pg){
+    if(pg.id==='pgLength') syncLen();        // display:none loses scrollTop
+    if(pg.id==='pgTime')   syncStart();
+    if(pg.id==='pgTimer'){ endConfirm(); elStrip.scrollLeft=0; }   // display:none loses it too
+    if(pg.id==='pgSet'){ renderMine(); setHint(); }
+    if(pg.id==='pgHome' && photosReady) showPhoto(photoIdx());
+    if(pg.id==='pgCal'){ calCursor=null; renderCal(); }   // always opens on this month
+    if(pg.id==='pgDone'){                                 // draw the tick again
+      var m=pg.querySelector('.tick-mark');
+      m.style.animation='none'; void m.offsetWidth; m.style.animation='';
+    }
+  }
+  function go(id){
+    var next=document.getElementById(id);
+    if(next===cur) return;
+    var prev=cur; cur=next;
+    document.body.classList.toggle('landing', id==='pgHome');
+    function show(){
+      next.hidden=false; onShow(next);
+      requestAnimationFrame(function(){ next.classList.add('on'); });
+    }
+    if(!prev){ show(); return; }
+    prev.classList.remove('on');
+    setTimeout(function(){ prev.hidden=true; show(); }, 260);
+  }
+
+  function swap(hide, show){
+    hide.hidden=true; show.hidden=false;
+    show.classList.remove('swapin'); void show.offsetWidth; show.classList.add('swapin');
+  }
+  function endConfirm(){
+    if(elConfirm.hidden) return;
+    elConfirm.hidden=true; elChangeRow.hidden=false;
+  }
+
+  elStart.addEventListener('click', function(){
+    go(state.fast ? openPage() : 'pgLength');
+  });
+  document.getElementById('btnCal').addEventListener('click', function(){ go('pgCal'); });
+  document.getElementById('calBack').addEventListener('click', function(){ go('pgHome'); });
+  document.getElementById('btnNext').addEventListener('click', function(){ go('pgTime'); });
+  document.getElementById('btnBack').addEventListener('click', function(){ go('pgLength'); });
+  document.getElementById('btnLenBack').addEventListener('click', function(){ go('pgLength'); });
+  // Back always steps back along the flow — landing, length, start time — and
+  // never sideways into whatever the app happens to be doing.
+  elCancel.addEventListener('click', function(){ go('pgHome'); });
+  document.getElementById('btnDone').addEventListener('click', function(){
+    state.fast=null; save(); render();   // the reward is spent; the day keeps its mark
+    go('pgHome');
+  });
+  // Owning up after the fact. She is not questioned or deterred for it — the
+  // fast simply stops counting and the day goes back to blank, as though she
+  // had never set it. Honesty should cost her nothing but the tick.
+  document.getElementById('btnBroke').addEventListener('click', function(){
+    if(state.fast) unmarkDay(state.fast.startsAt);
+    state.fast=null; save(); render();
+    go('pgHome');
+  });
+
+  // Changing a fast she has already committed to should take a second thought.
+  // A finished fast never reaches this screen, so there is no case for it here.
+  var confirmWhat=null;
+  elChange.addEventListener('click', function(){
+    var p=phase(), f=state.fast;
+    confirmWhat='change';
+    elAsk.textContent = p==='fasting'
+      ? 'You are '+durText(Date.now()-f.startsAt)+' into this fast. Are you sure?'
+      : 'Your fast is set to start at '+labelDate(new Date(f.startsAt))+'. Are you sure?';
+    elYes.textContent='Yes, change it';
+    swap(elChangeRow, elConfirm);
+  });
+
+  // Giving up stops the fast there and then, and the day is marked as a miss.
+  // It asks the same question first, for the same reason Change does.
+  elGive.addEventListener('click', function(){
+    var f=state.fast;
+    if(phase()!=='fasting') return;
+    confirmWhat='giveup';
+    elAsk.textContent='You are '+durText(Date.now()-f.startsAt)+' into this fast. Give up now?';
+    elYes.textContent='Yes, give up';
+    swap(elChangeRow, elConfirm);
+  });
+  document.getElementById('btnKeep').addEventListener('click', function(){
+    swap(elConfirm, elChangeRow);
+  });
+  elYes.addEventListener('click', function(){
+    endConfirm();
+    if(confirmWhat==='giveup'){
+      if(phase()!=='fasting'){ render(); return; }   // it finished while she hesitated
+      markDay(state.fast.startsAt, false);
+      state.fast=null; save(); render();
+      go('pgHome');
+      return;
+    }
+    go('pgLength');
+  });
+
+  // Set commits one fast. If that start time has already been and gone by more
+  // than the length, she means the next one; otherwise the fast is underway.
+  document.getElementById('btnSet').addEventListener('click', function(){
+    // Replacing a fast that was already under way is a miss. Replacing one that
+    // had not started yet is just her changing her mind, and counts for nothing.
+    var old=state.fast, t=Date.now();
+    if(old && t>=old.startsAt && t<old.endsAt) markDay(old.startsAt, false);
+
+    var dur=state.draftLen*60000;
+    var now=new Date(), s=toMins(state.draftStart);
+    var st=new Date(now); st.setHours(Math.floor(s/60), s%60, 0, 0);
+    if(st.getTime() > now.getTime()) st.setDate(st.getDate()-1);   // most recent occurrence
+    if(now.getTime() >= st.getTime()+dur){                          // that one is already over
+      st=new Date(now); st.setHours(Math.floor(s/60), s%60, 0, 0);
+      if(st.getTime() <= now.getTime()) st.setDate(st.getDate()+1); // so use the upcoming one
+    }
+    state.fast={ startsAt:st.getTime(), endsAt:st.getTime()+dur,
+                 startHHMM:state.draftStart, lenMins:state.draftLen };
+    save(); render(); go('pgTimer');
+  });
+
+  // Repaint only. Elapsed is always derived from the stored timestamps, so the
+  // fast begins on its own and a suspended app catches up when reopened.
+  setInterval(function(){
+    if(!state.fast) return;
+    render();
+    // The moment it finishes, if she is watching, she gets the tick.
+    if(phase()==='complete' && cur && cur.id==='pgTimer') go('pgDone');
+  }, 1000);
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden) return;
+    rollQuote();                       // a fresh line every time she comes back
+    rollPhoto();                       // and a different photo behind it
+    if(document.body.classList.contains('landing')) showPhoto(photoIdx());
+    render();
+    if(phase()==='complete' && cur && (cur.id==='pgTimer' || cur.id==='pgHome')) go('pgDone');
+  });
+
+  rollQuote();                         // and a fresh line on every cold start
+  render();
+  go(openPage());
+  if(migrated) save();
+
+  // Her own photos come off the phone's disk, so they land a moment after the
+  // rest of the app. The opening photo waits for them — otherwise the ones she
+  // added herself could never be the one she is greeted with, only something
+  // she had to swipe to find. The timeout is a backstop: if the store never
+  // answers, the app carries on with the photos it shipped with rather than
+  // sitting on a blank screen.
+  var settled=false;
+  function photosIn(){
+    if(settled) return;
+    settled=true; photosReady=true;
+    rebuildPhotos();
+    rollPhoto();                       // never the photo she saw last time
+    if(document.body.classList.contains('landing')) showPhoto(photoIdx());
+    paintDots();
+  }
+  setTimeout(photosIn, 1500);
+  loadMine(photosIn);
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js'); });
+  }
+})();
+</script>
+</body>
+</html>

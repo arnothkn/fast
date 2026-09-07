@@ -1,0 +1,4 @@
+# Nothing here is meant to be found. The site is reachable by anyone with the
+# link, but it should never turn up in a search result.
+User-agent: *
+Disallow: /

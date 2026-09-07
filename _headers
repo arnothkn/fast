@@ -1,0 +1,16 @@
+# The service worker decides when the app updates, so the files it checks must
+# never be served stale from the edge. "no-cache" means revalidate before use,
+# not "do not store" — the phone still works offline, it just always asks
+# whether there is a newer version first.
+/sw.js
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+/photos.js
+  Cache-Control: no-cache
+/quotes.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
