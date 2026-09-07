@@ -15,8 +15,14 @@
 <style>
   :root{
     --bg:#FBF7F0; --card:#FFFFFF; --ink:#1D2320; --muted:#6E7671;
-    --accent:#0E7C66; --accent-soft:#E3F0EC; --done:#B8761B;
-    --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC;
+    /* Orange is the working colour and green is now the reward: the arc, the
+       dots and the filled calendar days run orange while she is fasting, and
+       turn green at the moment she reaches the goal. --accent-dark is only
+       ever the lip under a button. --warn-soft moved yellower to keep the
+       confirm box from reading as just another orange panel. */
+    --accent:#DD5E0B; --accent-dark:#A8430A; --accent-soft:#FDEADB;
+    --done:#1E7A4F; --done-soft:#E3F0EC;
+    --track:#E8E1D6; --line:#DED6C9; --warn-soft:#FAF0D6;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; height:100%; overscroll-behavior:none;}
@@ -63,8 +69,14 @@
      when she drags that way while aiming sideways at the photos. */
   body.landing{overflow:hidden;}
   .btn.big{padding:22px; font-size:22px;}
-  body.hasphoto .btn.big{box-shadow:0 6px 24px rgba(0,0,0,.28);}
-  body.hasphoto .btn.ghost{box-shadow:inset 0 0 0 2px var(--line), 0 6px 24px rgba(0,0,0,.28);}
+  /* Over a photo the lip stays and a drop shadow is added under it, so the
+     buttons keep their edge against whatever is behind them. */
+  body.hasphoto .btn.primary{box-shadow:0 4px 0 var(--accent-dark), 0 10px 22px rgba(0,0,0,.34);}
+  body.hasphoto .btn.ghost{box-shadow:inset 0 0 0 2px var(--line), 0 4px 0 var(--line),
+                                      0 10px 22px rgba(0,0,0,.34);}
+  body.hasphoto .btn.primary:active{box-shadow:0 1px 0 var(--accent-dark), 0 6px 14px rgba(0,0,0,.3);}
+  body.hasphoto .btn.ghost:active{box-shadow:inset 0 0 0 2px var(--line), 0 1px 0 var(--line),
+                                             0 6px 14px rgba(0,0,0,.3);}
 
   /* One dot per photo, so it is plain there are more to swipe to. */
   .dots{display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin:0 0 2px;}
@@ -172,12 +184,25 @@
   body.done .sub{color:var(--done); font-weight:600;}
 
   /* ---- buttons ---- */
+  /* A solid lip underneath, so a button looks like something that goes down
+     when it is pressed rather than a coloured rectangle. Pressing moves it
+     onto the lip — 3px down, shadow down to 1px — so the pair keeps the same
+     footprint and only the button appears to sink.
+     Calendar takes the orange for its label rather than grey, because grey on
+     white reads as switched off, which is the opposite of what a button she is
+     meant to press should say. */
   .btn{width:100%; padding:19px; border:0; border-radius:16px;
        font-size:19px; font-weight:600; font-family:inherit;
-       touch-action:manipulation; cursor:pointer;}
-  .btn.primary{background:var(--accent); color:#fff;}
-  .btn.ghost{background:var(--card); color:var(--muted); box-shadow:inset 0 0 0 2px var(--line);}
-  .btn:active{filter:brightness(.94);}
+       touch-action:manipulation; cursor:pointer;
+       transition:transform .06s ease, box-shadow .06s ease;}
+  .btn.primary{background:var(--accent); color:#fff;
+               box-shadow:0 4px 0 var(--accent-dark);}
+  .btn.ghost{background:var(--card); color:var(--accent-dark);
+             box-shadow:inset 0 0 0 2px var(--line), 0 4px 0 var(--line);}
+  .btn.primary:active{transform:translateY(3px); box-shadow:0 1px 0 var(--accent-dark);}
+  .btn.ghost:active{transform:translateY(3px);
+                    box-shadow:inset 0 0 0 2px var(--line), 0 1px 0 var(--line);}
+  .btn:active{filter:brightness(.97);}
   .actions{display:flex; gap:10px;}
   .actions .btn{flex:1 1 0;}
   .actions .btn.back{flex:0 0 34%;}
@@ -209,8 +234,8 @@
   /* The reward for seeing a fast through. Sparse on purpose — more to come. */
   .tick{display:flex; justify-content:center;}
   .tick svg{width:140px; height:140px;}
-  .tick-ring{fill:var(--accent-soft); stroke:none;}
-  .tick-mark{fill:none; stroke:var(--accent); stroke-width:11;
+  .tick-ring{fill:var(--done-soft); stroke:none;}
+  .tick-mark{fill:none; stroke:var(--done); stroke-width:11;
              stroke-linecap:round; stroke-linejoin:round;
              stroke-dasharray:70; stroke-dashoffset:70;
              animation:draw .45s .2s cubic-bezier(.65,0,.35,1) forwards;}
@@ -292,7 +317,7 @@
 
   @media (prefers-reduced-motion: reduce){
     .page > *{transition-duration:.01ms; transform:none;}
-    .photos, .scrim, .cog, .viewer, .viewer img.snap{transition:none;}
+    .photos, .scrim, .cog, .viewer, .viewer img.snap, .btn{transition:none;}
     .tick-mark{animation:none; stroke-dashoffset:0;}
     .arc-fill{transition:none;}
   }

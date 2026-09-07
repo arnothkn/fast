@@ -1,5 +1,5 @@
 // Cache-first over the app shell so the app opens with no signal.
-var CACHE = 'fasting-v35';
+var CACHE = 'fasting-v36';
 var SHELL = ['.', 'index.html', 'quotes.js', 'photos.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', function (e) {
