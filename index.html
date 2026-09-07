@@ -14,20 +14,36 @@
 <title>สู้ๆครับ</title>
 <style>
   :root{
-    --bg:#FBF7F0; --card:#FFFFFF; --ink:#1D2320; --muted:#6E7671;
+    --bg:#FBF7F0; --card:#FFFFFF; --ink:#1D2320; --muted:#5C6560;
     /* Green is the working colour and amber marks the goal reached. --accent
        is a truer, deeper green than the teal it started as: white on it reads
        at 6.2:1 rather than 5.1:1, and the Start button was the one place where
        that mattered. --accent-dark is only ever the lip under a button. */
     --accent:#116E4E; --accent-dark:#0C5239; --accent-soft:#E4F0EA;
     --done:#B8761B;
+    /* --muted was 4.38:1 on the cream, just under the readable mark, and it is
+       the colour every small label uses. Darkened rather than enlarged. */
     --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC;
   }
+  /* Mitr, Arno's choice. Only the Thai block is loaded — 23KB for three weights
+     — so digits and Latin still come from the phone's own font and the timer
+     keeps its fixed-width figures. Served from here rather than from Google, so
+     it works with no signal and costs her no privacy. */
+  @font-face{font-family:'Mitr'; font-style:normal; font-weight:400;
+             font-display:swap; src:url(mitr-thai-400.woff2) format('woff2');
+             unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+  @font-face{font-family:'Mitr'; font-style:normal; font-weight:600;
+             font-display:swap; src:url(mitr-thai-600.woff2) format('woff2');
+             unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+  @font-face{font-family:'Mitr'; font-style:normal; font-weight:700;
+             font-display:swap; src:url(mitr-thai-700.woff2) format('woff2');
+             unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; height:100%; overscroll-behavior:none;}
   body{
     background:var(--bg); color:var(--ink);
-    font:400 17px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font:400 17px/1.4 'Mitr',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     display:flex; flex-direction:column; align-items:center;
     padding:calc(env(safe-area-inset-top) + 8px) 20px calc(env(safe-area-inset-bottom) + 16px);
     overscroll-behavior:none;
@@ -98,7 +114,7 @@
   .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
   /* No tracking anywhere Thai lands: the marks sit over and under the letters
      and belong to them, so pulling the letters apart pulls the word apart. */
-  .dow{text-align:center; font-size:11px; font-weight:600; line-height:1.5;
+  .dow{text-align:center; font-size:13px; font-weight:600; line-height:1.5;
        color:var(--muted);}
   .day{width:38px; height:38px; margin:0 auto; border-radius:50%;
        display:flex; align-items:center; justify-content:center;
@@ -108,7 +124,7 @@
   .day.miss{box-shadow:inset 0 0 0 2px var(--track); color:var(--muted);}
   .day.today{box-shadow:inset 0 0 0 2px var(--done); font-weight:600;}
   .legend{display:flex; gap:18px; justify-content:center; margin:0;
-          font-size:13px; color:var(--muted);}
+          font-size:15px; color:var(--muted);}
   .legend i{display:inline-block; width:12px; height:12px; border-radius:50%;
             margin-right:6px; vertical-align:-1px;}
   .legend .yes i{background:var(--accent);}
@@ -146,7 +162,7 @@
           -webkit-appearance:none; appearance:none;
           display:flex; flex-direction:column; align-items:center; justify-content:center;}
   .lenbox:active{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent);}
-  .lenbox .lab{font-size:11px; font-weight:600; line-height:1.5; color:var(--muted);}
+  .lenbox .lab{font-size:15px; font-weight:600; line-height:1.5; color:var(--muted);}
   .lenbox .v{margin-top:5px; font-size:23px; font-weight:700; line-height:1.25;
              color:var(--ink); font-variant-numeric:tabular-nums;}
   .band{position:absolute; left:8px; right:8px; top:44px; height:44px;
@@ -163,8 +179,8 @@
   /* the finish time is the thing she is really choosing, so it gets weight */
   .finish{background:var(--accent-soft); border-radius:16px; padding:13px 12px 15px;
           text-align:center;}
-  .finish .lab{display:block; font-size:12px; font-weight:600; line-height:1.5;
-               color:var(--accent); opacity:.8;}
+  .finish .lab{display:block; font-size:16px; font-weight:600; line-height:1.5;
+               color:var(--accent); opacity:.9;}
   .finish .t{display:block; margin-top:5px; font-size:32px; font-weight:700;
              letter-spacing:-.02em; line-height:1; color:var(--accent);
              font-variant-numeric:tabular-nums;}
@@ -178,8 +194,8 @@
   body.done .arc-fill{stroke:var(--done);}
 
   .readout{position:absolute; left:8%; right:8%; bottom:8px; text-align:center;}
-  .cap{font-size:14px; font-weight:600; line-height:1.5;
-       color:var(--muted); min-height:21px;}
+  .cap{font-size:17px; font-weight:600; line-height:1.5;
+       color:var(--muted); min-height:26px;}
   .big{margin-top:6px; font-size:44px; font-weight:600; letter-spacing:-.02em;
        font-variant-numeric:tabular-nums; line-height:1;}
   .big.time{font-size:40px;}
@@ -267,7 +283,7 @@
      — readable on a dark sky or a bright beach alike. */
   body.landing.hasphoto .cog svg{stroke:#fff; filter:drop-shadow(0 2px 7px rgba(0,0,0,.6));}
 
-  .hint{margin:0; text-align:center; font-size:15px; line-height:1.45; color:var(--muted);}
+  .hint{margin:0; text-align:center; font-size:16px; line-height:1.5; color:var(--muted);}
   .setgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
   .thumb{position:relative; aspect-ratio:3/4; min-height:98px;
          border-radius:14px; overflow:hidden; background:var(--track);}

@@ -1,6 +1,8 @@
 // Cache-first over the app shell so the app opens with no signal.
-var CACHE = 'fasting-v39';
-var SHELL = ['.', 'index.html', 'quotes.js', 'photos.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
+var CACHE = 'fasting-v41';
+var SHELL = ['.', 'index.html', 'quotes.js', 'photos.js', 'manifest.webmanifest',
+             'icon-180.png', 'icon-192.png', 'icon-512.png',
+             'mitr-thai-400.woff2', 'mitr-thai-600.woff2', 'mitr-thai-700.woff2'];
 
 self.addEventListener('install', function (e) {
   // 'reload' so installing always goes to the network. Without it the browser

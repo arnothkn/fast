@@ -34,6 +34,18 @@ empty. Adding a name to it puts that file on the public website.
 Master copies of the eight originals are in `~/fasting-app-photos`, outside this
 repo on purpose.
 
+## The font
+
+Thai is set in **Mitr**, served from this repo rather than from Google, so the
+app still works with no signal and her phone never announces itself to a third
+party on every launch. Only the Thai block of the font is loaded — three weights,
+23KB all together — so digits and any Latin still come from the phone's own
+font, which is what keeps the timer's figures a fixed width as it counts.
+
+The three `.woff2` files are listed in `SHELL` in `sw.js`. **Anything the app
+loads has to be in that list**, or it will be missing when she is offline.
+`OFL-Mitr.txt` is the font's licence and has to stay with it.
+
 ## Changing the quotes
 
 `quotes.js`, one line each. If the file is missing the app just shows no quote.
@@ -46,7 +58,7 @@ run.
 **Bump `CACHE` in `sw.js` every time you change any file:**
 
 ```js
-var CACHE = 'fasting-v39';   // -> 'fasting-v40'
+var CACHE = 'fasting-v41';   // -> 'fasting-v42'
 ```
 
 The service worker serves the whole app out of a cache named after that string.
