@@ -35,8 +35,8 @@ Master copies of the eight originals are in `~/fasting-app-photos`, outside this
 repo on purpose.
 
 **The one exception is the app icon.** `icon-180.png`, `icon-192.png` and
-`icon-512.png` are a square crop of her — `mum-bamboo.jpg`, the region starting
-at 260,304 and 428px on a side — so that photo *is* on the public site and
+`icon-512.png` are a square crop of her — `mum-niagara-poncho.jpg`, the region
+starting at 188,420 and 720px on a side — so that photo *is* on the public site and
 anyone with the address can see it. That was asked for deliberately. The 180 is
 the one iOS puts on her home screen and keeps every colour; the other two exist
 only for the manifest, are never drawn on an iPhone, and are quantised to 256
@@ -66,7 +66,7 @@ run.
 **Bump `CACHE` in `sw.js` every time you change any file:**
 
 ```js
-var CACHE = 'fasting-v44';   // -> 'fasting-v45'
+var CACHE = 'fasting-v45';   // -> 'fasting-v46'
 ```
 
 The service worker serves the whole app out of a cache named after that string.
