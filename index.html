@@ -1006,10 +1006,11 @@
     elGive.hidden   = !running;
     if(running) elEatTime.textContent = labelDate(new Date(f.endsAt));
 
-    // Her photos, small, under the fast. Only while it is actually running —
-    // before it starts the page is deliberately bare but for the watch.
-    if(running && stripDirty) buildStrip();
-    elStrip.hidden = !running || !elStrip.children.length;
+    // Her photos, small, under the fast — and under the wait as well, so the
+    // two halves of this screen look like one place rather than a bare screen
+    // that suddenly fills up the moment the clock starts.
+    if(stripDirty) buildStrip();
+    elStrip.hidden = !elStrip.children.length;
 
     var q = p==='fasting' ? currentQuote() : null;
     elQuote.hidden = !q;

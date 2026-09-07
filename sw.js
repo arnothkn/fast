@@ -1,5 +1,5 @@
 // Cache-first over the app shell so the app opens with no signal.
-var CACHE = 'fasting-v43';
+var CACHE = 'fasting-v44';
 var SHELL = ['.', 'index.html', 'quotes.js', 'photos.js', 'manifest.webmanifest',
              'icon-180.png', 'icon-192.png', 'icon-512.png',
              'kanit-thai-400.woff2', 'kanit-thai-600.woff2', 'kanit-thai-700.woff2'];

@@ -34,6 +34,14 @@ empty. Adding a name to it puts that file on the public website.
 Master copies of the eight originals are in `~/fasting-app-photos`, outside this
 repo on purpose.
 
+**The one exception is the app icon.** `icon-180.png`, `icon-192.png` and
+`icon-512.png` are a square crop of her — `mum-bamboo.jpg`, the region starting
+at 260,304 and 428px on a side — so that photo *is* on the public site and
+anyone with the address can see it. That was asked for deliberately. The 180 is
+the one iOS puts on her home screen and keeps every colour; the other two exist
+only for the manifest, are never drawn on an iPhone, and are quantised to 256
+colours to keep the download small.
+
 ## The font
 
 Thai is set in **Kanit**, served from this repo rather than from Google, so the
@@ -58,7 +66,7 @@ run.
 **Bump `CACHE` in `sw.js` every time you change any file:**
 
 ```js
-var CACHE = 'fasting-v43';   // -> 'fasting-v44'
+var CACHE = 'fasting-v44';   // -> 'fasting-v45'
 ```
 
 The service worker serves the whole app out of a cache named after that string.
@@ -80,7 +88,8 @@ Jekyll, which refuses to publish any file whose name starts with an underscore �
 ## On the address not being secret
 
 The repo is public and the URL follows from its name, so anyone who finds the
-profile can open the app. What they get is an empty timer. Her fasts and her
-photos live in her phone's own storage and are never uploaded, so there is
-nothing personal on the site to find. That is what protects her here — not the
-address, which was never going to stay private.
+profile can open the app. What they get is an empty timer. Her fasts and the
+photos she adds live in her phone's own storage and are never uploaded. The one
+personal thing on the site is the icon, which is a picture of her — see **The
+photos** above. Everything else is protected by there being nothing to find, not
+by the address, which was never going to stay private.
