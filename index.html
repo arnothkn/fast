@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en-AU">
+<html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Fasting">
+<meta name="apple-mobile-web-app-title" content="สู้ๆครับ">
 <meta name="theme-color" content="#FBF7F0">
 <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Fasting</title>
+<title>สู้ๆครับ</title>
 <style>
   :root{
     --bg:#FBF7F0; --card:#FFFFFF; --ink:#1D2320; --muted:#6E7671;
@@ -96,8 +96,10 @@
           color:var(--muted); padding:6px 16px; touch-action:manipulation; cursor:pointer;}
   .navbtn[disabled]{opacity:.22;}
   .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
-  .dow{text-align:center; font-size:11px; font-weight:600; letter-spacing:.06em;
-       text-transform:uppercase; color:var(--muted);}
+  /* No tracking anywhere Thai lands: the marks sit over and under the letters
+     and belong to them, so pulling the letters apart pulls the word apart. */
+  .dow{text-align:center; font-size:11px; font-weight:600; line-height:1.5;
+       color:var(--muted);}
   .day{width:38px; height:38px; margin:0 auto; border-radius:50%;
        display:flex; align-items:center; justify-content:center;
        font-size:15px; color:var(--ink); font-variant-numeric:tabular-nums;}
@@ -125,7 +127,7 @@
   .page.on > :nth-child(6){transition-delay:.27s;}
   .page.on > :nth-child(7){transition-delay:.32s;}
 
-  .q{margin:0; text-align:center; font-size:24px; font-weight:600; letter-spacing:-.01em;}
+  .q{margin:0; text-align:center; font-size:24px; font-weight:600; line-height:1.4;}
 
   /* ---- wheel: 3 rows of 44px ---- */
   .pickrow{display:flex; gap:10px; align-items:stretch;}
@@ -144,10 +146,9 @@
           -webkit-appearance:none; appearance:none;
           display:flex; flex-direction:column; align-items:center; justify-content:center;}
   .lenbox:active{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent);}
-  .lenbox .lab{font-size:10px; font-weight:600; letter-spacing:.12em;
-               text-transform:uppercase; color:var(--muted);}
-  .lenbox .v{margin-top:5px; font-size:30px; font-weight:700; letter-spacing:-.02em;
-             line-height:1; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .lenbox .lab{font-size:11px; font-weight:600; line-height:1.5; color:var(--muted);}
+  .lenbox .v{margin-top:5px; font-size:23px; font-weight:700; line-height:1.25;
+             color:var(--ink); font-variant-numeric:tabular-nums;}
   .band{position:absolute; left:8px; right:8px; top:44px; height:44px;
         background:var(--accent-soft); border-radius:12px; pointer-events:none;}
   .scroller{position:relative; height:100%; overflow-y:scroll;
@@ -162,8 +163,8 @@
   /* the finish time is the thing she is really choosing, so it gets weight */
   .finish{background:var(--accent-soft); border-radius:16px; padding:13px 12px 15px;
           text-align:center;}
-  .finish .lab{display:block; font-size:11px; font-weight:600; letter-spacing:.12em;
-               text-transform:uppercase; color:var(--accent); opacity:.8;}
+  .finish .lab{display:block; font-size:12px; font-weight:600; line-height:1.5;
+               color:var(--accent); opacity:.8;}
   .finish .t{display:block; margin-top:5px; font-size:32px; font-weight:700;
              letter-spacing:-.02em; line-height:1; color:var(--accent);
              font-variant-numeric:tabular-nums;}
@@ -177,8 +178,8 @@
   body.done .arc-fill{stroke:var(--done);}
 
   .readout{position:absolute; left:8%; right:8%; bottom:8px; text-align:center;}
-  .cap{font-size:13px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
-       color:var(--muted); min-height:18px;}
+  .cap{font-size:14px; font-weight:600; line-height:1.5;
+       color:var(--muted); min-height:21px;}
   .big{margin-top:6px; font-size:44px; font-weight:600; letter-spacing:-.02em;
        font-variant-numeric:tabular-nums; line-height:1;}
   .big.time{font-size:40px;}
@@ -247,7 +248,7 @@
              stroke-dasharray:70; stroke-dashoffset:70;
              animation:draw .45s .2s cubic-bezier(.65,0,.35,1) forwards;}
   @keyframes draw{to{stroke-dashoffset:0;}}
-  .wd{margin:0; text-align:center; font-size:30px; font-weight:700; letter-spacing:-.02em;}
+  .wd{margin:0; text-align:center; font-size:30px; font-weight:700; line-height:1.35;}
   .wdsub{margin:0; text-align:center; font-size:17px; line-height:1.4; color:var(--muted);}
 
   /* ---- the small button in the top corner ---- */
@@ -334,7 +335,7 @@
 <body>
 <div class="photos" id="photos" hidden></div>
 <div class="scrim" id="scrim" hidden></div>
-<button class="topbtn cog" id="btnCog" aria-label="Settings">
+<button class="topbtn cog" id="btnCog" aria-label="ตั้งค่า">
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="7.4"/>
     <circle cx="12" cy="12" r="2.7"/>
@@ -343,7 +344,7 @@
              M12 19.4 L12 22.2 M17.23 17.23 L19.21 19.21"/>
   </svg>
 </button>
-<button class="topbtn calview" id="btnCalTop" aria-label="View calendar">
+<button class="topbtn calview" id="btnCalTop" aria-label="ดูปฏิทิน">
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <rect x="3.2" y="5" width="17.6" height="15.8" rx="2.6"/>
     <path d="M3.2 9.9 H20.8 M8 2.9 V6.7 M16 2.9 V6.7"/>
@@ -353,7 +354,7 @@
 
 <div class="viewer" id="viewer" hidden>
   <img id="viewerImg" alt="">
-  <button class="vclose" id="viewerClose" aria-label="Close">&times;</button>
+  <button class="vclose" id="viewerClose" aria-label="ปิด">&times;</button>
   <div class="vdots" id="viewerDots"></div>
 </div>
 
@@ -362,62 +363,62 @@
   <!-- opening screen -->
   <section class="page" id="pgHome" hidden>
     <div class="dots" id="dots" hidden></div>
-    <button class="btn primary big" id="btnStart">Start</button>
-    <button class="btn ghost" id="btnCal">Calendar</button>
+    <button class="btn primary big" id="btnStart">เริ่ม</button>
+    <button class="btn ghost" id="btnCal">ปฏิทิน</button>
   </section>
 
   <!-- calendar -->
   <section class="page" id="pgCal" hidden>
     <div class="calhead">
-      <button class="navbtn" id="calPrev" aria-label="Previous month">&lsaquo;</button>
+      <button class="navbtn" id="calPrev" aria-label="เดือนก่อนหน้า">&lsaquo;</button>
       <span class="m" id="calMonth"></span>
-      <button class="navbtn" id="calNext" aria-label="Next month">&rsaquo;</button>
+      <button class="navbtn" id="calNext" aria-label="เดือนถัดไป">&rsaquo;</button>
     </div>
     <div class="grid" id="calDow"></div>
     <div class="grid" id="calGrid"></div>
     <p class="legend">
-      <span class="yes"><i></i>Done</span>
-      <span class="no"><i></i>Missed</span>
+      <span class="yes"><i></i>ทำได้</span>
+      <span class="no"><i></i>ไม่ได้ทำ</span>
     </p>
-    <button class="btn ghost" id="calBack">Back</button>
+    <button class="btn ghost" id="calBack">ย้อนกลับ</button>
   </section>
 
   <!-- settings -->
   <section class="page" id="pgSet" hidden>
-    <h2 class="q">Settings</h2>
+    <h2 class="q">ตั้งค่า</h2>
     <p class="hint" id="setHint"></p>
-    <button class="btn primary" id="btnAdd">Add photos</button>
+    <button class="btn primary" id="btnAdd">เพิ่มรูป</button>
     <div class="setgrid" id="mineGrid" hidden></div>
-    <button class="btn ghost" id="setBack">Back</button>
+    <button class="btn ghost" id="setBack">ย้อนกลับ</button>
   </section>
 
   <!-- step 1 -->
   <section class="page" id="pgLength" hidden>
-    <h2 class="q">How long?</h2>
+    <h2 class="q">นานแค่ไหนครับ</h2>
     <div class="wheelbox"><div class="band"></div><div class="scroller" id="lenCol"></div></div>
     <div class="actions">
-      <button class="btn ghost back" id="btnCancel">Back</button>
-      <button class="btn primary" id="btnNext">Next</button>
+      <button class="btn ghost back" id="btnCancel">ย้อนกลับ</button>
+      <button class="btn primary" id="btnNext">ต่อไป</button>
     </div>
   </section>
 
   <!-- step 2 -->
   <section class="page" id="pgTime" hidden>
-    <h2 class="q">Start at?</h2>
+    <h2 class="q">เริ่มกี่โมงครับ</h2>
     <div class="pickrow">
       <button type="button" class="lenbox" id="btnLenBack">
-        <span class="lab">Length</span>
+        <span class="lab">ระยะ</span>
         <span class="v" id="lenChip"></span>
       </button>
       <div class="wheelbox"><div class="band"></div><div class="scroller" id="startCol"></div></div>
     </div>
     <div class="finish">
-      <span class="lab">Finishing at</span>
+      <span class="lab">จะได้กินอีกที</span>
       <span class="t" id="finishTime"></span>
     </div>
     <div class="actions">
-      <button class="btn ghost back" id="btnBack">Back</button>
-      <button class="btn primary" id="btnSet">Set</button>
+      <button class="btn ghost back" id="btnBack">ย้อนกลับ</button>
+      <button class="btn primary" id="btnSet">ตกลง</button>
     </div>
   </section>
 
@@ -444,19 +445,19 @@
       </div>
     </div>
     <div class="finish" id="eatBox" hidden>
-      <span class="lab">Can eat again at</span>
+      <span class="lab">จะได้กินอีกที</span>
       <span class="t" id="eatTime"></span>
     </div>
     <div class="strip" id="strip" hidden></div>
     <div class="changerow" id="changeRow">
-      <button class="btn quiet" id="btnChange">Change</button>
-      <button class="btn quiet" id="btnGive" hidden>Give up</button>
+      <button class="btn quiet" id="btnChange">เปลี่ยน</button>
+      <button class="btn quiet" id="btnGive" hidden>ยอมแพ้</button>
     </div>
     <div class="confirm" id="confirmRow" hidden>
       <p class="ask" id="ask"></p>
-      <button class="btn primary" id="btnKeep">Keep going</button>
+      <button class="btn primary" id="btnKeep">ไม่ต้องเปลี่ยน</button>
       <div class="changerow">
-        <button class="btn quiet" id="btnYes">Yes, change it</button>
+        <button class="btn quiet" id="btnYes">ใช่ เปลี่ยน</button>
       </div>
     </div>
   </section>
@@ -468,11 +469,11 @@
         <path class="tick-mark" d="M38 62 L54 78 L84 44"/>
       </svg>
     </div>
-    <h2 class="wd">Well done</h2>
+    <h2 class="wd">เก่งมากครับ</h2>
     <p class="wdsub" id="doneSub"></p>
-    <button class="btn primary big" id="btnDone">Done</button>
+    <button class="btn primary big" id="btnDone">เรียบร้อย</button>
     <div class="changerow">
-      <button class="btn quiet" id="btnBroke">I broke this fast</button>
+      <button class="btn quiet" id="btnBroke">เผลอกินในเวลา</button>
     </div>
   </section>
 </div>
@@ -493,25 +494,29 @@
   function snapHHMM(hhmm){ return toHHMM(Math.round(toMins(hhmm)/STEP)*STEP); }
   function snapLen(m){ m=Math.round(m/LEN_STEP)*LEN_STEP; return Math.max(LEN_MIN, Math.min(LEN_MAX, m)); }
 
+  // 24-hour, the way a clock reads in Thailand. Still the device's own clock
+  // and nothing else — no timeZone option, so it follows her phone.
   function labelDate(d){
-    return d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true})
-            .replace(/\s*(am|pm)\.?$/i, function(_,x){ return ' '+x.toUpperCase(); });
+    return d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false});
   }
   function label(mins){
     var d=new Date();
     d.setHours(Math.floor(((mins%1440)+1440)%1440/60), mins%60, 0, 0);
     return labelDate(d);
   }
-  function lenLabel(m){ var h=Math.floor(m/60), mm=m%60; return mm ? h+'h '+mm+'m' : h+'h'; }
+  function lenLabel(m){
+    var h=Math.floor(m/60), mm=m%60;
+    return mm ? h+' ชม. '+mm+' นาที' : h+' ชม.';
+  }
   function hms(ms){
     var s=Math.max(0,Math.floor(ms/1000));
     return Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
   }
   function durText(ms){
     var m=Math.floor(ms/60000);
-    if(m<60) return m+' minute'+(m===1?'':'s');
+    if(m<60) return m+' นาที';
     var h=Math.floor(m/60), r=m%60;
-    return h+'h'+(r? ' '+r+'m' : '');
+    return h+' ชม.'+(r? ' '+r+' นาที' : '');
   }
   function spanMins(a,b){ var d=toMins(b)-toMins(a); if(d<=0) d+=1440; return d; }
 
@@ -935,17 +940,17 @@
     if(p==='fasting'){
       var total=f.endsAt-f.startsAt, elapsed=Date.now()-f.startsAt;
       progress=Math.min(1, elapsed/total);
-      elCap.textContent='Fasting';
+      elCap.textContent='ผ่านไปแล้ว';
       elBig.textContent=hms(elapsed); elBig.classList.remove('time');
-      elSub.textContent='of '+lenLabel(Math.round(total/60000));
+      elSub.textContent='จาก '+lenLabel(Math.round(total/60000));
     }else if(p==='armed'){
-      elCap.textContent='Starting at';                     // no counter before it begins
+      elCap.textContent='จะเริ่มเมื่อ';                     // no counter before it begins
       elBig.textContent=labelDate(new Date(f.startsAt)); elBig.classList.add('time');
-      elSub.textContent='Get ready';
+      elSub.textContent='เตรียมตัวให้พร้อมครับ';
     }else if(p==='complete'){
       markDay(f.startsAt, true);         // she saw it through
       progress=1; done=true;
-      elDoneSub.textContent='You finished your '+lenLabel(f.lenMins)+' fast.';
+      elDoneSub.textContent='ครบ '+lenLabel(f.lenMins)+' แล้วครับ';
     }
 
     elWatch.hidden = p!=='armed';        // set, and waiting to begin
@@ -956,7 +961,7 @@
     // Always "Start", never "Your fast". Backing out of Change lands her here
     // with the fast still set, and at that point the button is her way back to
     // it — but it should read the same as it always does.
-    elStart.textContent = 'Start';
+    elStart.textContent = 'เริ่ม';
 
     // The one thing she actually wants to know while a fast is running.
     var running = p==='fasting';
@@ -1157,14 +1162,14 @@
     var out='';
     for(var i=0;i<mine.length;i++)
       out+='<div class="thumb"><img src="'+mine[i].url+'" alt="">'
-         + '<button class="x" type="button" data-id="'+mine[i].id+'" aria-label="Remove photo">\u00D7</button></div>';
+         + '<button class="x" type="button" data-id="'+mine[i].id+'" aria-label="เอารูปออก">\u00D7</button></div>';
     elMineGrid.innerHTML=out;
     elMineGrid.hidden = !mine.length;
   }
   function setHint(){
     elSetHint.textContent = mine.length
-      ? 'Your photos show on the opening screen and while you are fasting. Tap \u00D7 to remove one.'
-      : 'Add photos of your own. They show on the opening screen and while you are fasting.';
+      ? 'รูปที่เพิ่มไว้จะขึ้นที่หน้าแรกครับ กด \u00D7 เพื่อเอาออก'
+      : 'เพิ่มรูปของตัวเองได้ครับ รูปจะขึ้นที่หน้าแรก';
   }
   elMineGrid.addEventListener('click', function(e){
     var b=e.target.closest ? e.target.closest('.x') : null;
@@ -1187,14 +1192,15 @@
   elPick.addEventListener('change', function(){
     var files=elPick.files;
     if(!files || !files.length) return;
-    elSetHint.textContent='Adding\u2026';
+    elSetHint.textContent='กำลังเพิ่ม\u2026';
     importFiles(files, function(added, tried){
       elPick.value='';                 // so picking the same photo again still fires
       rebuildPhotos();
       renderMine(); paintDots(); render();
-      if(added===tried && added) elSetHint.textContent = added===1 ? 'Photo added.' : added+' photos added.';
-      else if(added)             elSetHint.textContent = added+' of '+tried+' added. The rest could not be read.';
-      else                       elSetHint.textContent = 'That could not be added. Try another photo.';
+      // One line where English needed two: Thai does not inflect for number.
+      if(added===tried && added) elSetHint.textContent = 'เพิ่มรูปแล้ว '+added+' รูป';
+      else if(added)             elSetHint.textContent = 'เพิ่มได้ '+added+' จาก '+tried+' รูป ที่เหลืออ่านไม่ได้ครับ';
+      else                       elSetHint.textContent = 'เพิ่มรูปนี้ไม่ได้ครับ ลองรูปอื่นดูนะครับ';
     });
   });
 
@@ -1202,7 +1208,7 @@
   var calCursor=null;                    // first of the month on show
 
   (function buildDow(){
-    var names=['M','T','W','T','F','S','S'], out='';
+    var names=['จ','อ','พ','พฤ','ศ','ส','อา'], out='';
     for(var i=0;i<7;i++) out+='<span class="dow">'+names[i]+'</span>';
     document.getElementById('calDow').innerHTML=out;
   })();
@@ -1212,7 +1218,8 @@
     if(!calCursor) calCursor=new Date(now.getFullYear(), now.getMonth(), 1);
     var y=calCursor.getFullYear(), m=calCursor.getMonth();
 
-    elCalMonth.textContent = calCursor.toLocaleDateString('en-AU',{month:'long', year:'numeric'});
+    // th-TH carries the Buddhist year with it, which is the year she counts in.
+    elCalMonth.textContent = calCursor.toLocaleDateString('th-TH',{month:'long', year:'numeric'});
 
     var lead=(new Date(y,m,1).getDay()+6)%7;        // weeks start Monday
     var days=new Date(y,m+1,0).getDate();
@@ -1319,9 +1326,9 @@
     var p=phase(), f=state.fast;
     confirmWhat='change';
     elAsk.textContent = p==='fasting'
-      ? 'You are '+durText(Date.now()-f.startsAt)+' into this fast. Are you sure?'
-      : 'Your fast is set to start at '+labelDate(new Date(f.startsAt))+'. Are you sure?';
-    elYes.textContent='Yes, change it';
+      ? 'ทำได้ '+durText(Date.now()-f.startsAt)+' แล้ว ต้องการจะเปลี่ยนใช่ไหมครับ'
+      : 'กำลังจะเริ่มเมื่อ '+labelDate(new Date(f.startsAt))+' ต้องการจะเปลี่ยนใช่ไหมครับ';
+    elYes.textContent='ใช่ เปลี่ยน';
     swap(elChangeRow, elConfirm);
   });
 
@@ -1331,8 +1338,8 @@
     var f=state.fast;
     if(phase()!=='fasting') return;
     confirmWhat='giveup';
-    elAsk.textContent='You are '+durText(Date.now()-f.startsAt)+' into this fast. Give up now?';
-    elYes.textContent='Yes, give up';
+    elAsk.textContent='เริ่มมา '+durText(Date.now()-f.startsAt)+' แล้ว จะหยุดเลยไหมครับ';
+    elYes.textContent='ใช่ ยอมแพ้';
     swap(elChangeRow, elConfirm);
   });
   document.getElementById('btnKeep').addEventListener('click', function(){
