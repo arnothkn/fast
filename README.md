@@ -34,13 +34,28 @@ empty. Adding a name to it puts that file on the public website.
 Master copies of the eight originals are in `~/fasting-app-photos`, outside this
 repo on purpose.
 
-**The one exception is the app icon.** `icon-180.png`, `icon-192.png` and
-`icon-512.png` are a square crop of her — `mum-niagara-poncho.jpg`, the region
+**The one exception is the app icon.** `icon-180-v2.png`, `icon-192-v2.png` and
+`icon-512-v2.png` are a square crop of her — `mum-niagara-poncho.jpg`, the region
 starting at 188,420 and 720px on a side — so that photo *is* on the public site and
 anyone with the address can see it. That was asked for deliberately. The 180 is
 the one iOS puts on her home screen and keeps every colour; the other two exist
 only for the manifest, are never drawn on an iPhone, and are quantised to 256
 colours to keep the download small.
+
+**Changing the icon means changing the filenames.** Overwriting them in place
+does not work: Add to Home Screen showed the new picture in the share sheet and
+put the old one on the home screen, because the installed app's own service
+worker still had the old bytes cached under that exact URL — and iOS keeps its
+own copy of a web clip's icon besides. A name that has never been requested
+before cannot be served from any of those caches. Bump the `-v2` to `-v3` and
+update the three places that name them: the `apple-touch-icon` link in
+`index.html`, the three `icons` entries in `manifest.webmanifest`, and `SHELL`
+in `sw.js`.
+
+Even then, **an icon already on her home screen never changes.** iOS reads it
+when the web clip is made and does not go back for another. It only takes effect
+on a fresh Add to Home Screen, and deleting the old icon to make room takes her
+fast history and her photos with it.
 
 ## The font
 
@@ -66,7 +81,7 @@ run.
 **Bump `CACHE` in `sw.js` every time you change any file:**
 
 ```js
-var CACHE = 'fasting-v45';   // -> 'fasting-v46'
+var CACHE = 'fasting-v46';   // -> 'fasting-v47'
 ```
 
 The service worker serves the whole app out of a cache named after that string.
