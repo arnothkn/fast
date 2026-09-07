@@ -953,6 +953,9 @@
     // Backing out of the pickers leaves her on the opening screen, so that
     // screen has to lead back to a fast she already has. Otherwise it would be
     // stranded there until she closed the app.
+    // Always "Start", never "Your fast". Backing out of Change lands her here
+    // with the fast still set, and at that point the button is her way back to
+    // it — but it should read the same as it always does.
     elStart.textContent = 'Start';
 
     // The one thing she actually wants to know while a fast is running.
@@ -1285,8 +1288,7 @@
     go(state.fast ? openPage() : 'pgLength');
   });
   // The calendar is now reachable from two places, so Back has to return to
-  // whichever one she came from rather than always to the opening screen —
-  // which, mid-fast, is not a screen she should be able to land on at all.
+  // whichever one she came from rather than always to the opening screen.
   var calFrom='pgHome';
   document.getElementById('btnCal').addEventListener('click', function(){ calFrom='pgHome'; go('pgCal'); });
   document.getElementById('btnCalTop').addEventListener('click', function(){ calFrom='pgTimer'; go('pgCal'); });
@@ -1296,9 +1298,7 @@
   document.getElementById('btnLenBack').addEventListener('click', function(){ go('pgLength'); });
   // Back always steps back along the flow — landing, length, start time — and
   // never sideways into whatever the app happens to be doing.
-  // Backing out of Change means she has left the fast alone, so it returns her
-  // to it. The opening screen would have said Start over a fast still running.
-  elCancel.addEventListener('click', function(){ go(state.fast ? openPage() : 'pgHome'); });
+  elCancel.addEventListener('click', function(){ go('pgHome'); });
   document.getElementById('btnDone').addEventListener('click', function(){
     state.fast=null; save(); render();   // the reward is spent; the day keeps its mark
     go('pgHome');
