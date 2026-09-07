@@ -23,7 +23,7 @@
     --done:#B8761B;
     /* --muted was 4.38:1 on the cream, just under the readable mark, and it is
        the colour every small label uses. Darkened rather than enlarged. */
-    --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC;
+    --track:#E8E1D6; --line:#DED6C9; --warn-soft:#F9EEDC; --stop:#A8322A;
   }
   /* Kanit, Arno's choice — lighter on the page than Mitr was. Only the Thai
      block is loaded, 21KB for three weights, so digits and Latin still come
@@ -166,6 +166,9 @@
   .lenbox .lab{font-size:17px; font-weight:600; line-height:1.5; color:var(--muted);}
   .lenbox .v{margin-top:5px; font-size:23px; font-weight:700; line-height:1.25;
              color:var(--ink); font-variant-numeric:tabular-nums;}
+  /* ชม. is the unit, not the answer — it stays regular wherever the number
+     around it is set bold. */
+  .u{font-weight:400;}
   .band{position:absolute; left:8px; right:8px; top:44px; height:44px;
         background:var(--accent-soft); border-radius:12px; pointer-events:none;}
   .scroller{position:relative; height:100%; overflow-y:scroll;
@@ -201,6 +204,7 @@
        font-variant-numeric:tabular-nums; line-height:1;}
   .big.time{font-size:40px;}
   .sub{margin-top:8px; font-size:16px; color:var(--muted);}
+  .nb{white-space:nowrap;}
   body.done .cap{color:var(--done);}
   body.done .sub{color:var(--done); font-weight:600;}
 
@@ -239,6 +243,10 @@
              background:none; color:var(--muted); box-shadow:none;
              text-decoration:underline; text-underline-offset:3px;
              text-decoration-color:var(--line);}
+  /* Giving up and owning up are the two ways a fast ends badly. They stay quiet
+     and small — she is never pushed away from them — but they are not the same
+     kind of thing as Change, and should not look like it. */
+  .btn.quiet.stop{color:var(--stop); text-decoration-color:rgba(168,50,42,.35);}
 
   .confirm{display:flex; flex-direction:column; gap:12px;}
   .ask{margin:0; padding:18px 16px; border-radius:16px; background:var(--warn-soft);
@@ -468,7 +476,7 @@
     <div class="strip" id="strip" hidden></div>
     <div class="changerow" id="changeRow">
       <button class="btn quiet" id="btnChange">เปลี่ยน</button>
-      <button class="btn quiet" id="btnGive" hidden>ยอมแพ้</button>
+      <button class="btn quiet stop" id="btnGive" hidden>ยอมแพ้</button>
     </div>
     <div class="confirm" id="confirmRow" hidden>
       <p class="ask" id="ask"></p>
@@ -490,7 +498,7 @@
     <p class="wdsub" id="doneSub"></p>
     <button class="btn primary big" id="btnDone">เรียบร้อย</button>
     <div class="changerow">
-      <button class="btn quiet" id="btnBroke">เผลอกินในเวลา</button>
+      <button class="btn quiet stop" id="btnBroke">เผลอกินในเวลา</button>
     </div>
   </section>
 </div>
@@ -524,6 +532,14 @@
   function lenLabel(m){
     var h=Math.floor(m/60), mm=m%60;
     return mm ? h+' ชม. '+mm+' นาที' : h+' ชม.';
+  }
+  // The same thing with the unit marked, for the two places set in bold: the
+  // number is what she is choosing, the unit is only saying what it is.
+  function lenLabelHTML(m){
+    var h=Math.floor(m/60), mm=m%60;
+    var out=h+' <span class="u">ชม.</span>';
+    if(mm) out+=' '+mm+' <span class="u">นาที</span>';
+    return out;
   }
   function hms(ms){
     var s=Math.max(0,Math.floor(ms/1000));
@@ -872,7 +888,7 @@
     var f=document.createDocumentFragment();
     for(var i=0;i<labels.length;i++){
       var r=document.createElement('div');
-      r.className='row'; r.textContent=labels[i];
+      r.className='row'; r.innerHTML=labels[i];   // labels are ours: digits and units
       f.appendChild(r);
     }
     el.appendChild(f);
@@ -900,7 +916,7 @@
   }
 
   var lenLabels=[], lenIdxToMins=[];
-  for(var m=LEN_MIN; m<=LEN_MAX; m+=LEN_STEP){ lenLabels.push(lenLabel(m)); lenIdxToMins.push(m); }
+  for(var m=LEN_MIN; m<=LEN_MAX; m+=LEN_STEP){ lenLabels.push(lenLabelHTML(m)); lenIdxToMins.push(m); }
   var syncLen = buildWheel(document.getElementById('lenCol'), lenLabels,
     function(){ return (state.draftLen-LEN_MIN)/LEN_STEP; },
     function(i){ state.draftLen=lenIdxToMins[i]; });
@@ -951,7 +967,7 @@
   // ---------- render ----------
   function render(){
     elFinishTime.textContent = label(toMins(state.draftStart)+state.draftLen);
-    elLenChip.textContent    = lenLabel(state.draftLen);
+    elLenChip.innerHTML      = lenLabelHTML(state.draftLen);
 
     var f=state.fast, p=phase(), progress=0, done=false;
     if(p==='fasting'){
@@ -963,7 +979,11 @@
     }else if(p==='armed'){
       elCap.textContent='จะเริ่มเมื่อ';                     // no counter before it begins
       elBig.textContent=labelDate(new Date(f.startsAt)); elBig.classList.add('time');
-      elSub.textContent='เตรียมตัวให้พร้อมครับ';
+        // Two phrases, each kept whole. Thai has no spaces inside a phrase, so
+      // left alone the browser breaks it wherever its dictionary says it may —
+      // which on a narrow screen, or with iOS Display Zoom on, put "ครับ" on a
+      // line of its own.
+      elSub.innerHTML='<span class="nb">ออกจากแอปได้</span> <span class="nb">เตรียมตัวให้พร้อมครับ</span>';
     }else if(p==='complete'){
       markDay(f.startsAt, true);         // she saw it through
       progress=1; done=true;
