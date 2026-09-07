@@ -72,10 +72,12 @@
      the lip stays and a drop shadow is added under it. The white button takes a
      much lighter one — at the same strength as the green it read as a slab
      sitting on the photo rather than a card lying on it. */
-  body.landing.hasphoto .btn.primary{box-shadow:0 4px 0 var(--accent-dark), 0 8px 18px rgba(0,0,0,.3);}
+  body.landing.hasphoto .btn.primary{box-shadow:inset 0 0 0 2px var(--accent-dark),
+                                                0 4px 0 var(--accent-dark), 0 8px 18px rgba(0,0,0,.3);}
   body.landing.hasphoto .btn.ghost{box-shadow:inset 0 0 0 2px var(--line), 0 4px 0 var(--line),
                                               0 3px 10px rgba(0,0,0,.14);}
-  body.landing.hasphoto .btn.primary:active{box-shadow:0 1px 0 var(--accent-dark), 0 5px 12px rgba(0,0,0,.26);}
+  body.landing.hasphoto .btn.primary:active{box-shadow:inset 0 0 0 2px var(--accent-dark),
+                                                       0 1px 0 var(--accent-dark), 0 5px 12px rgba(0,0,0,.26);}
   body.landing.hasphoto .btn.ghost:active{box-shadow:inset 0 0 0 2px var(--line), 0 1px 0 var(--line),
                                                      0 2px 7px rgba(0,0,0,.12);}
 
@@ -189,18 +191,22 @@
      when it is pressed rather than a coloured rectangle. Pressing moves it
      onto the lip — 3px down, shadow down to 1px — so the pair keeps the same
      footprint and only the button appears to sink.
-     Calendar takes the orange for its label rather than grey, because grey on
-     white reads as switched off, which is the opposite of what a button she is
-     meant to press should say. */
+     Both buttons are built the same way: a 2px ring inside the edge and a lip
+     of the same colour beneath it — the line colour on the white one, the dark
+     green on the green one.
+     Calendar takes the dark green for its label rather than grey, because grey
+     on white reads as switched off, which is the opposite of what a button she
+     is meant to press should say. */
   .btn{width:100%; padding:19px; border:0; border-radius:16px;
        font-size:19px; font-weight:600; font-family:inherit;
        touch-action:manipulation; cursor:pointer;
        transition:transform .06s ease, box-shadow .06s ease;}
   .btn.primary{background:var(--accent); color:#fff;
-               box-shadow:0 4px 0 var(--accent-dark);}
+               box-shadow:inset 0 0 0 2px var(--accent-dark), 0 4px 0 var(--accent-dark);}
   .btn.ghost{background:var(--card); color:var(--accent-dark);
              box-shadow:inset 0 0 0 2px var(--line), 0 4px 0 var(--line);}
-  .btn.primary:active{transform:translateY(3px); box-shadow:0 1px 0 var(--accent-dark);}
+  .btn.primary:active{transform:translateY(3px);
+                      box-shadow:inset 0 0 0 2px var(--accent-dark), 0 1px 0 var(--accent-dark);}
   .btn.ghost:active{transform:translateY(3px);
                     box-shadow:inset 0 0 0 2px var(--line), 0 1px 0 var(--line);}
   .btn:active{filter:brightness(.97);}
